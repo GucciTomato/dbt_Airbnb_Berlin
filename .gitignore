@@ -1,0 +1,18 @@
+# datasets
+data/
+data
+
+# dbt
+profiles.yml
+target/
+logs/
+dbt_packages/
+
+# ideas
+ideen.odt
+
+# construction plan
+bauplan/
+
+# virtual environment
+.venv/
