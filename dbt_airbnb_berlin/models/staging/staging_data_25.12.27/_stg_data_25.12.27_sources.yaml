@@ -1,0 +1,12 @@
+version: 2
+
+sources:
+- name: data_25_12_27
+  database: airbnb_berlin_db
+  schema: data_25_12_27
+  tables:
+  - name: reviews
+
+  - name: calendar
+
+  - name: listings
