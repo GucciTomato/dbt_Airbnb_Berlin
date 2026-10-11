@@ -10,5 +10,6 @@ SELECT
     {{ dbt_utils.generate_surrogate_key (['id', 'date']) }} as surrogate_key,
     CAST("date" AS DATE) AS "date",
     reviewer_id,
-    comments
+    comments,
+   '26.06.26' AS data_cohort
 FROM {{source('data_26_06_26', 'reviews')}}

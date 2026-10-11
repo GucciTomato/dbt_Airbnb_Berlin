@@ -12,7 +12,7 @@ SELECT
    "description",
    neighborhood_overview,
    host_id,
-   host_name, -- secondary validation of host besides host_id for later when merging with other models in intermediate layer
+   host_name, -- secondary validation of host besides host_id for later when merging with other models
    host_since,
    host_location,
    host_about,
@@ -32,6 +32,7 @@ SELECT
    host_verifications,
    host_has_profile_pic,
    host_identity_verified,
+   neighbourhood_cleansed,
    neighbourhood_group_cleansed,
    property_type,
    room_type,
@@ -73,7 +74,7 @@ SELECT
    CAST(review_scores_communication AS FLOAT) AS review_scores_communication,
    CAST(review_scores_location AS FLOAT) AS review_scores_location,
    CAST(review_scores_value AS FLOAT) AS review_scores_value,
-   license, -- secondary validation of host besides host_id for later when merging with other models in intermediate layer
+   license, -- secondary validation of host besides host_id for later when merging with other models
    instant_bookable,
    calculated_host_listings_count,
    reviews_per_month,
@@ -81,8 +82,9 @@ SELECT
    CAST(hosts_time_as_host_years AS INT) AS hosts_time_as_host_years, -- present in data from 25.12.27 onwards
    CAST(hosts_time_as_user_months AS INT) AS hosts_time_as_user_months, -- present in data from 25.12.27 onwards
    CAST(hosts_time_as_user_years AS INT) AS hosts_time_as_user_years, -- present in data from 25.12.27 onwards
-   price_quote_checkin_date, -- present in data from 26.03.28 onwards
-   price_quote_checkout_date, -- present in data from 26.03.28 onwards
-   price_quote_price_per_night, -- present in data from 26.03.28 onwards
-   price_quote_raw -- present in data from 26.03.28 onwards
-FROM {{source('data_26_03_28', 'listings')}}
+   CAST(price_quote_checkin_date AS FLOAT) AS price_quote_checkin_date, -- present in data from 26.03.28 onwards
+   CAST(price_quote_checkout_date AS FLOAT) AS price_quote_checkout_date, -- present in data from 26.03.28 onwards
+   CAST(price_quote_price_per_night AS FLOAT) AS price_quote_price_per_night, -- present in data from 26.03.28 onwards
+   CAST(price_quote_raw AS FLOAT) AS price_quote_raw, -- present in data from 26.03.28 onwards
+   '26.06.26' AS data_cohort
+FROM {{source('data_26_06_26', 'listings')}}

@@ -12,7 +12,7 @@ SELECT
    "description",
    neighborhood_overview,
    host_id,
-   host_name, -- secondary validation of host besides host_id for later when merging with other models in intermediate layer
+   host_name, -- secondary validation of host besides host_id for later when merging with other models
    host_since,
    host_location,
    host_about,
@@ -32,6 +32,7 @@ SELECT
    host_verifications,
    host_has_profile_pic,
    host_identity_verified,
+   neighbourhood_cleansed,
    neighbourhood_group_cleansed,
    property_type,
    room_type,
@@ -73,8 +74,13 @@ SELECT
    CAST(review_scores_communication AS FLOAT) AS review_scores_communication,
    CAST(review_scores_location AS FLOAT) AS review_scores_location,
    CAST(review_scores_value AS FLOAT) AS review_scores_value,
-   license, -- secondary validation of host besides host_id for later when merging with other models in intermediate layer
+   license, -- secondary validation of host besides host_id for later
    instant_bookable,
    calculated_host_listings_count,
-   reviews_per_month
-FROM {{source('data_25_09_23', 'listings')}}
+   reviews_per_month,
+   CAST(hosts_time_as_host_months AS INT) AS hosts_time_as_host_months, -- present in data from 25.12.27 onwards
+   CAST(hosts_time_as_host_years AS INT) AS hosts_time_as_host_years, -- present in data from 25.12.27 onwards
+   CAST(hosts_time_as_user_months AS INT) AS hosts_time_as_user_months, -- present in data from 25.12.27 onwards
+   CAST(hosts_time_as_user_years AS INT) AS hosts_time_as_user_years, -- present in data from 25.12.27 onwards
+   '25.12.27' AS data_cohort
+FROM {{source('data_25_12_27', 'listings')}}
