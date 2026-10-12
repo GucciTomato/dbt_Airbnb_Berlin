@@ -1,3 +1,9 @@
+{{ 
+    config(
+        materialized= "view"
+    )
+}}
+
 WITH first_last_seen AS (
     SELECT
         listings_id,
@@ -6,7 +12,6 @@ WITH first_last_seen AS (
     FROM {{ ref('int_airbnb_history__listings') }}
     GROUP BY listings_id
 )
-
 
 SELECT 
     hist.listings_id,
@@ -85,6 +90,7 @@ SELECT
     hist.price_quote_raw,
     fl.first_seen,
     fl.last_seen,
-    fl.last_seen = MAX(fl.last_seen) OVER () AS is_active_in_latest
+    fl.last_seen = MAX(fl.last_seen) OVER () AS is_active_in_latest,
+    data_cohort
 FROM {{ ref('int_airbnb_history__listings') }} hist
 LEFT JOIN first_last_seen fl ON hist.listings_id = fl.listings_id
