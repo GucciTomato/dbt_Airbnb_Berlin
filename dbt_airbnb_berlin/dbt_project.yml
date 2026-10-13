@@ -42,6 +42,9 @@ models:
       staging_airbnb_26.06.26:
         +materialized: view
     intermediate:
-      +materialized: view
+      history:
+        +materialized: view
+      current:
+        +materialized: view
     marts:
       +materialized: table

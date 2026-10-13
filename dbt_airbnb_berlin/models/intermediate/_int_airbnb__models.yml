@@ -1,6 +1,7 @@
 version: 2
 
 models:
+  - name: int_airbnb_history__listings
   - name: int_airbnb_current__listings
     columns:
       - name: listings_id
@@ -11,68 +12,89 @@ models:
         data_tests:
           - unique 
           - not_null
-      - name: last_scraped,
-      - name: listings_name,
-      - name: description,
-      - name: neighborhood_overview,
-      - name: host_id,
-      - name: host_name,
-      - name: host_since,
-      - name: host_location,
-      - name: host_about,
-      - name: host_response_time,
-      - name: host_acceptance_rate,
-      - name: host_is_superhost,
-      - name: host_neighbourhood,
-      - name: host_listings_count,
-      - name: host_total_listings_count,
-      - name: host_verifications,
-      - name: host_has_profile_pic,
-      - name: host_identity_verified,
-      - name: neighbourhood_cleansed,
-      - name: neighbourhood_group_cleansed,
-      - name: property_type,
-      - name: room_type,
-      - name: accommodates,
-      - name: bathrooms,
-      - name: bathrooms_text,
-      - name: bedrooms,
-      - name: beds,
-      - name: amenities,
-      - name: price,
-      - name: minimum_nights,
-      - name: maximum_nights,
-      - name: calendar_updated,
-      - name: has_availability,
-      - name: availability_30,
-      - name: availability_365,
-      - name: calendar_last_scraped,
-      - name: number_of_reviews,
-      - name: number_of_reviews_l30d,
-      - name: availability_eoy,
-      - name: estimated_occupancy_l365d,
-      - name: estimated_revenue_l365d,
-      - name: first_review,
-      - name: last_review,
-      - name: review_scores_rating,
-      - name: review_scores_accuracy,
-      - name: review_scores_cleanliness,
-      - name: review_scores_checkin,
-      - name: review_scores_communication,
-      - name: review_scores_location,
-      - name: review_scores_value,
-      - name: license,
-      - name: instant_bookable,
-      - name: calculated_host_listings_count,
-      - name: reviews_per_month,
-      - name: hosts_time_as_host_months, # eine Spalte jeweils draus machen mit einem Wert vielleicht wie lange schon
-      - name: hosts_time_as_host_years,
-      - name: hosts_time_as_user_months,
-      - name: hosts_time_as_user_years,
-      - name: price_quote_checkin_date,
-      - name: price_quote_checkout_date,
-      - name: price_quote_price_per_night,
-      - name: price_quote_raw,
+      - name: last_scraped
+      - name: listings_name
+      - name: description
+      - name: neighborhood_overview
+      - name: host_id
+      - name: host_name
+      - name: host_since
+      - name: host_location
+      - name: host_about
+      - name: host_response_time
+      - name: host_acceptance_rate
+      - name: host_is_superhost
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: [true, false]
+                quote: false
+      - name: host_neighbourhood
+      - name: host_listings_count
+      - name: host_total_listings_count
+      - name: host_verifications
+      - name: host_has_profile_pic
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: [true, false]
+                quote: false
+      - name: host_identity_verified
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: [true, false]
+                quote: false
+      - name: neighbourhood_cleansed
+      - name: neighbourhood_group_cleansed
+      - name: property_type
+      - name: room_type
+      - name: accommodates
+      - name: bathrooms_text
+      - name: bedrooms
+      - name: beds
+      - name: amenities
+      - name: price
+      - name: minimum_nights
+      - name: maximum_nights
+      - name: calendar_updated
+      - name: has_availability
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: [true, false]
+                quote: false
+      - name: availability_30
+      - name: availability_365
+      - name: calendar_last_scraped
+      - name: number_of_reviews
+      - name: number_of_reviews_l30d
+      - name: availability_eoy
+      - name: estimated_occupancy_l365d
+      - name: estimated_revenue_l365d
+      - name: first_review
+      - name: last_review
+      - name: review_scores_rating
+      - name: review_scores_accuracy
+      - name: review_scores_cleanliness
+      - name: review_scores_checkin
+      - name: review_scores_communication
+      - name: review_scores_location
+      - name: review_scores_value
+      - name: license
+      - name: instant_bookable
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: [true, false]
+                quote: false
+      - name: calculated_host_listings_count
+      - name: reviews_per_month
+      - name: hosts_time_as_host_months
+      - name: hosts_time_as_host_years
+      - name: hosts_time_as_user_months
+      - name: hosts_time_as_user_years
+      - name: price_quote_price_per_night
       - name: data_cohort
 
 
