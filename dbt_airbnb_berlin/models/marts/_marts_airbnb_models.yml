@@ -1,0 +1,119 @@
+version: 2
+
+models:
+  - name: dim_airbnb_listings
+    columns:
+      - name: listings_id
+        data_tests: 
+          - unique
+          - not_null
+      - name: host_id
+        data_tests:
+          - relationships:
+              arguments:
+                to: ref('dim_airbnb_hosts')
+                field: host_id
+      - name: neighbourhood_key
+        data_tests:
+          - relationships:
+              arguments:
+                to: ref('dim_airbnb_neighbourhoods')
+                field: neighbourhood_key
+  - name: dim_airbnb_hosts
+    columns:
+      - name: host_id
+        data_tests:
+          - unique
+          - not_null
+  - name: dim_airbnb_neighbourhoods
+    columns:
+      - name: neighbourhood_key
+        data_tests:
+          - unique
+          - not_null
+      - name: neighbourhood_cleansed
+        data_tests:
+          - not_null
+
+  - name: fct_airbnb_listing_snapshots
+    columns:
+      - name: snapshot_key
+        data_tests:
+          - unique
+          - not_null
+      - name: listings_id
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('dim_airbnb_listings')
+                field: listings_id
+      - name: cohort_date
+        data_tests:
+          - not_null
+      - name: price
+        data_tests:
+          - dbt_utils.accepted_range:
+              arguments:
+                min_value: 0
+                inclusive: false
+              config:
+                severity: warn
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns:
+              - listings_id
+              - cohort_date
+
+  - name: fct_airbnb_reviews
+    columns:
+      - name: reviews_id
+        data_tests:
+          - unique
+          - not_null
+      - name: listings_id
+        data_tests:
+          - not_null
+      - name: review_date
+        data_tests:
+          - not_null
+
+  - name: fct_airbnb_reviews_monthly
+    columns:
+      - name: review_month_key
+        data_tests:
+          - unique
+          - not_null
+
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns:
+              - listings_id
+              - review_month
+
+  - name: dim_airbnb_listing_texts
+    columns:
+      - name: listings_id
+        data_tests:
+          - unique
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('dim_airbnb_listings')
+                field: listings_id
+
+  - name: agg_market_by_cohort
+    columns:
+      - name: market_key
+        data_tests:
+          - unique
+          - not_null
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns:
+              - cohort_date
+              - neighbourhood_group_cleansed
+              - room_type

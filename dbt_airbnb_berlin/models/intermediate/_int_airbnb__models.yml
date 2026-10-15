@@ -2,11 +2,10 @@ version: 2
 
 models:
   - name: int_airbnb_history__listings
-  - name: int_airbnb_current__listings
+  - name: int_airbnb_cleaned__listings
     columns:
       - name: listings_id
         data_tests:
-          - unique
           - not_null
       - name: surrogate_key
         data_tests:
@@ -50,14 +49,17 @@ models:
       - name: property_type
       - name: room_type
       - name: accommodates
-      - name: bathrooms_text
       - name: bedrooms
       - name: beds
       - name: amenities
-      - name: price
       - name: minimum_nights
       - name: maximum_nights
       - name: calendar_updated
+      - name: stay_type
+        data_tests:
+          - accepted_values:
+              arguments: 
+                values: ['long_term', 'short_term', 'weekly', 'monthly']
       - name: has_availability
         data_tests:
           - accepted_values:
@@ -96,34 +98,16 @@ models:
       - name: hosts_time_as_user_years
       - name: price_quote_price_per_night
       - name: data_cohort
-
-
-# models:
-#   - name: stg_airbnb_history__reviews
-#     schema: x
-#     columns:
-#       - name: source_order_id
-#         data_tests:
-#           - not_null
-#           - unique
-#       - name: stg_airbnb_history__listings
-#         data_tests:
-#           - not_null
-#           - unique
-#   - name: stg_airbnb_history__calendar
-#     columns:
-#       - name: source_order_id
-#         data_tests:
-#           - not_null
-#           - unique
-#       - name: order_number
-#         data_tests:
-#           - not_null
-#           - unique
-#   - name: int_erp__orders_incremental
-#     columns:
-#       - name: source_order_id
-#         data_tests:
-#           - not_null
-#           - unique
-#
+  - name: int_airbnb_current__reviews
+    columns:
+      - name: listings_id
+      - name: reviews_id
+        data_tests:
+          - unique
+          - not_null
+      - name: surrogate_key
+      - name: date 
+      - name: reviewer_id
+      - name: comments
+      - name: data_cohort
+      - name: review_first_seen_cohort

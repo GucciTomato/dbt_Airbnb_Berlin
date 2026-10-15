@@ -41,7 +41,7 @@ SELECT
    bedrooms,
    beds,
    amenities,
-   CAST(ROUND(CAST(REPLACE(price, '$', '') AS FLOAT)) AS INT) AS price,
+   {{ clean_price('price') }} AS price,
    minimum_nights,
    maximum_nights,
    minimum_minimum_nights,

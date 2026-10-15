@@ -12,8 +12,7 @@ SELECT
    "description",
    neighborhood_overview,
    host_id,
-   host_name, -- secondary validation of host besides host_id for later when merging with other models
-   host_since,
+   host_name,
    host_location,
    host_about,
    host_response_time,
@@ -42,7 +41,7 @@ SELECT
    bedrooms,
    beds,
    amenities,
-   CAST(ROUND(CAST(REPLACE(price, '$', '') AS FLOAT)) AS INT) AS price,
+   {{ clean_price('price') }} AS price,
    minimum_nights,
    maximum_nights,
    minimum_minimum_nights,
@@ -74,7 +73,7 @@ SELECT
    CAST(review_scores_communication AS FLOAT) AS review_scores_communication,
    CAST(review_scores_location AS FLOAT) AS review_scores_location,
    CAST(review_scores_value AS FLOAT) AS review_scores_value,
-   license, -- secondary validation of host besides host_id for later when merging with other models
+   license,
    instant_bookable,
    calculated_host_listings_count,
    reviews_per_month,

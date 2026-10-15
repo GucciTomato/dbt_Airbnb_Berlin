@@ -42,7 +42,7 @@ SELECT
    bedrooms,
    beds,
    amenities,
-   CAST(ROUND(CAST(REPLACE(price, '$', '') AS FLOAT)) AS INT) AS price,
+  {{ clean_price('price') }} AS price,
    minimum_nights,
    maximum_nights,
    minimum_minimum_nights,
@@ -84,7 +84,7 @@ SELECT
    CAST(hosts_time_as_user_years AS INT) AS hosts_time_as_user_years, -- present in data from 25.12.27 onwards
    TO_DATE(price_quote_checkin_date, 'YYYY-MM-DD') AS price_quote_checkin_date, -- present in data from 26.03.28 onwards
    TO_DATE(price_quote_checkout_date, 'YYYY-MM-DD') AS price_quote_checkout_date, -- present in data from 26.03.28 onwards
-   price_quote_price_per_night, -- present in data from 26.03.28 onwards
-   price_quote_raw, -- present in data from 26.03.28 onwards
+   CAST(price_quote_price_per_night AS FLOAT) AS price_quote_price_per_night, -- present in data from 26.03.28 onwards
+   CAST(price_quote_raw AS FLOAT) AS price_quote_raw, -- present in data from 26.03.28 onwards
    '26.03.28' AS data_cohort
 FROM {{source('data_26_03_28', 'listings')}}
