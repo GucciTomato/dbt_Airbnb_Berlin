@@ -12,18 +12,11 @@ SELECT
    "description",
    neighborhood_overview,
    host_id,
-   host_name,
    host_location,
    host_about,
    host_response_time,
-    CASE 
-        WHEN host_response_rate = 'N/A' THEN NULL 
-        ELSE (CAST(REPLACE(host_response_rate, '%', '') AS INT) * 0.01) 
-    END AS host_response_rate,
-    CASE 
-        WHEN host_acceptance_rate = 'N/A' THEN NULL 
-        ELSE (CAST(REPLACE(host_acceptance_rate, '%', '') AS INT) * 0.01) 
-    END AS host_acceptance_rate,
+   {{ calculate_rate('host_response_rate') }} AS host_response_rate,
+   {{ calculate_rate('host_acceptance_rate') }} AS host_acceptance_rate,
    host_is_superhost,
    host_neighbourhood,
    CAST(host_listings_count AS INT) AS host_listings_count,

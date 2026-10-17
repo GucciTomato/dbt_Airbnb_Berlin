@@ -13,7 +13,7 @@ SELECT
     property_type,
     room_type,
     accommodates,
-    NULLIF(number_of_bathrooms, NULL)::numeric AS bathrooms,
+    number_of_bathrooms AS bathrooms,
     COALESCE(has_shared_bathroom, false) AS has_shared_bathroom,
     bedrooms,
     beds,

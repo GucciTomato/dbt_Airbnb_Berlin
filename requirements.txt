@@ -2,4 +2,7 @@ dbt-postgres~=1.9.0
 sqlalchemy==2.1.4
 pandas==3.0.6
 openpyxl==3.1.5
-psycopg2-binary # wenn ohne Vorkompilieren erwünscht vorher: sudo apt install libpq-dev python3-dev build-essential
+psycopg2-binary # wenn ohne Vorkompilieren erwünscht, vorher: sudo apt install libpq-dev python3-dev build-essential
+dotenv
+click
+gzip

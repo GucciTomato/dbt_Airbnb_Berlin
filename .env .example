@@ -1,0 +1,5 @@
+HOST="localhost"
+DATABASE=
+USER=
+PASSWORD=
+RAWDATAPATH="../"

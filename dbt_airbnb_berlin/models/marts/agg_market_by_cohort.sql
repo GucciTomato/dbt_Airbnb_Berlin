@@ -99,9 +99,9 @@ SELECT
  PERCENTILE_CONT(0.5) WITHIN GROUP (ORDER BY NULLIF(b.estimated_revenue_l365d, '')::numeric) AS median_estimated_revenue
 FROM base b
 LEFT JOIN exits e
- ON b.cohort_date = e.cohort_date
- AND b.neighbourhood_group_cleansed = e.neighbourhood_group_cleansed
- AND b.room_type = e.room_type
+ON b.cohort_date = e.cohort_date
+AND b.neighbourhood_group_cleansed = e.neighbourhood_group_cleansed
+AND b.room_type = e.room_type
 GROUP BY
  b.cohort_date,
  b.cohort_index,
