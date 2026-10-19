@@ -5,6 +5,7 @@ data/data_26.03.28/
 data/data_26.06.26/
 data/data_complete_zipped/
 data/database_pipeline.ipynb
+data/logs_ingestion_pipeline.log
 !data/database_pipeline_example.ipynb
 
 # dbt
@@ -24,3 +25,6 @@ bauplan/
 
 # environment variables
 .env
+
+# python cache
+__pycache__
