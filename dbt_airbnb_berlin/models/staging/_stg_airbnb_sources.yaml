@@ -1,14 +1,10 @@
 version: 2
 
 sources:
-- name: data_25_09_23
+- name: airbnb_raw_data
   database: airbnb_berlin_db
-  schema: data_25_09_23
+  schema: airbnb_raw_data
   tables:
   - name: reviews
-
-  - name: neighbourhoods
-
-  - name: calendar
 
   - name: listings

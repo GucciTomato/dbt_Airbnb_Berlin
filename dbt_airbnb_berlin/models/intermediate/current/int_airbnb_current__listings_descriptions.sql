@@ -12,4 +12,4 @@ SELECT
     REGEXP_REPLACE(
         hist.host_about, '^[^a-zA-Z0-9]+|[^a-zA-Z0-9]+$', '', 'g'
     ) AS host_about_cleaned
-FROM {{ ref('int_airbnb_history__listings') }} hist
+FROM {{ ref('stg_airbnb__listings') }} hist

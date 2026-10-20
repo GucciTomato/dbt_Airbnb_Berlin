@@ -8,7 +8,6 @@ WITH latest_host_row AS (
  -- Hostattribute aus dem zuletzt gesehenen Listing des Hosts
  SELECT DISTINCT ON (host_id)
  host_id,
- host_name,
  host_since,
  host_location,
  host_response_time,
@@ -40,7 +39,6 @@ host_aggregates AS (
 
 SELECT
  h.host_id,
- h.host_name,
  h.host_since,
  h.host_location,
  h.host_neighbourhood,
