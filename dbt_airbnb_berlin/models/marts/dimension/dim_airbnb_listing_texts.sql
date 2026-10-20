@@ -14,7 +14,7 @@ WITH latest_texts AS (
  ), '') AS host_about,
  hist.host_id,
  TO_DATE(hist.data_cohort, 'YY.MM.DD') AS cohort_date
- FROM {{ ref('int_airbnb_history__listings') }} hist
+ FROM {{ ref('stg_airbnb__listings') }} hist
  ORDER BY hist.listings_id, TO_DATE(hist.data_cohort, 'YY.MM.DD') DESC
 )
 

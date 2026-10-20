@@ -3,10 +3,11 @@ data/data_25.09.23/
 data/data_25.12.27
 data/data_26.03.28/
 data/data_26.06.26/
-data/data_complete_zipped/
-data/database_pipeline.ipynb
-data/logs_ingestion_pipeline.log
-!data/database_pipeline_example.ipynb
+data/data*
+data_complete_zipped/
+database_pipeline.ipynb
+logs_ingestion_pipeline.log
+!database_pipeline_example.ipynb
 
 # dbt
 profiles.yml
@@ -27,4 +28,4 @@ bauplan/
 .env
 
 # python cache
-__pycache__
+__pycache__/

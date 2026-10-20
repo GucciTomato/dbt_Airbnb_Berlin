@@ -9,16 +9,16 @@ WITH first_last_seen AS (
         listings_id,
         MIN(TO_DATE(data_cohort, 'YY.MM.DD')) AS first_seen,
         MAX(TO_DATE(data_cohort, 'YY.MM.DD')) AS last_seen
-    FROM {{ ref('int_airbnb_history__listings') }}
+    FROM {{ ref('stg_airbnb__listings') }}
     GROUP BY listings_id
 ),
 host_since_by_host AS (
- SELECT
- host_id,
- MIN(host_since) AS host_since -- exists only in 25.09.23 data
- FROM {{ ref('int_airbnb_history__listings') }}
- WHERE host_since IS NOT NULL
- GROUP BY host_id
+    SELECT
+        host_id,
+        MIN(host_since) AS host_since -- exists only in 25.09.23 data
+    FROM {{ ref('stg_airbnb__listings') }}
+    WHERE host_since IS NOT NULL
+    GROUP BY host_id
 )
 
 SELECT
@@ -32,13 +32,13 @@ SELECT
     hist.host_response_time,
     hist.host_response_rate,
     hist.host_acceptance_rate,
-    {{ convert_binary_to_bool(hist.host_is_superhost) }} AS host_is_superhost,
+    {{ convert_binary_to_bool('hist.host_is_superhost') }} AS host_is_superhost,
     hist.host_neighbourhood,
     hist.host_listings_count,
     hist.host_total_listings_count,
     hist.host_verifications,
-    {{ convert_binary_to_bool(hist.host_has_profile_pic) }} AS host_has_profile_pic,
-    {{ convert_binary_to_bool(hist.host_identity_verified) }} AS host_identity_verified,
+    {{ convert_binary_to_bool('hist.host_has_profile_pic') }} AS host_has_profile_pic,
+    {{ convert_binary_to_bool('hist.host_identity_verified') }} AS host_identity_verified,
     hist.neighbourhood_cleansed,
     hist.neighbourhood_group_cleansed,
     hist.property_type,
@@ -67,7 +67,7 @@ SELECT
     hist.maximum_minimum_nights,
     hist.minimum_maximum_nights,
     hist.maximum_maximum_nights,
-    {{ convert_binary_to_bool(hist.has_availability) }} AS has_availability,
+    {{ convert_binary_to_bool('hist.has_availability') }} AS has_availability,
     hist.availability_30,
     hist.availability_365,
     hist.calendar_last_scraped,
@@ -86,7 +86,7 @@ SELECT
     hist.review_scores_location,
     hist.review_scores_value,
     CASE WHEN hist.license ~ '^(?![0-9]{2})' THEN NULL ELSE hist.license END AS license,
-    {{ convert_binary_to_bool(hist.instant_bookable) }} AS instant_bookable,
+    {{ convert_binary_to_bool('hist.instant_bookable') }} AS instant_bookable,
     hist.reviews_per_month,
     hist.hosts_time_as_host_months,
     hist.hosts_time_as_host_years,
@@ -102,6 +102,6 @@ SELECT
         PARTITION BY hist.listings_id
         ORDER BY TO_DATE(hist.data_cohort, 'YY.MM.DD') DESC
     ) AS rn
-FROM {{ ref('int_airbnb_history__listings') }} hist
+FROM {{ ref('stg_airbnb__listings') }} hist
 LEFT JOIN first_last_seen fl ON hist.listings_id = fl.listings_id
 LEFT JOIN host_since_by_host hostsince ON hist.host_id = hostsince.host_id

@@ -50,7 +50,7 @@ async def get_existing_online_data():
     return soup
 
 
-def extract_city_files(soup=soup):
+def extract_city_files(soup):
     start = soup.find(lambda t: t.name == "h3" and t.get_text(strip=True).startswith("Berlin,"))
     if start is None:
         logging.error("No h3-Header found for Berlin – has website structure changed?")
@@ -107,18 +107,18 @@ def candidates_for_download(soup):
 def download_files(soup):
     to_be_downloaded = candidates_for_download(soup)
 
-    data_directory = Path(require_env("DOWNLOAD_PATH"))
+    data_directory = Path(require_env("RAW_DATA_PATH"))
 
     for cohort in to_be_downloaded:
         cohort_directory = data_directory / cohort
         cohort_directory.mkdir(parents=True, exist_ok=True)
         
         for file_name, url in to_be_downloaded[cohort].items():
-            logging.info("Lade %s/%s herunter", cohort, file_name)
+            logging.info("Download %s/%s", cohort, file_name)
             try:
                 urlretrieve(url, cohort_directory / file_name)
             except URLError:
-                logging.exception("Download fehlgeschlagen: %s", url)
+                logging.exception("Download failed: %s", url)
 
 
 if __name__ == "__main__":

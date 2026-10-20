@@ -1,7 +1,6 @@
 version: 2
 
 models:
-  - name: int_airbnb_history__listings
   - name: int_airbnb_cleaned__listings
     columns:
       - name: listings_id
