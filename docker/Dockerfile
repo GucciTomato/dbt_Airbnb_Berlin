@@ -2,6 +2,13 @@ FROM apache/airflow:3.3.2-python3.12
 
 ENV PLAYWRIGHT_BROWSERS_PATH=/opt/airflow/ms-playwright
 
+USER airflow
+
+# dbt venv
+RUN python -m venv /opt/airflow/dbt-venv \
+    && /opt/airflow/dbt-venv/bin/pip install --no-cache-dir dbt-core==1.12.5 dbt-postgres==1.9.1
+
+
 COPY requirements.txt /tmp/requirements.txt
 RUN python -m venv /opt/airflow/app-venv \
     && /opt/airflow/app-venv/bin/pip install --no-cache-dir -r /tmp/requirements.txt \

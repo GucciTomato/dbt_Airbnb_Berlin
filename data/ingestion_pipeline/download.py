@@ -50,7 +50,7 @@ async def get_existing_online_data():
     return soup
 
 
-def extract_city_files(soup):
+def extract_city_files(soup) -> list:
     start = soup.find(lambda t: t.name == "h3" and t.get_text(strip=True).startswith("Berlin,"))
     if start is None:
         logging.error("No h3-Header found for Berlin – has website structure changed?")
@@ -68,7 +68,7 @@ def extract_city_files(soup):
 
 
 
-def candidates_for_download(soup):
+def candidates_for_download(soup) -> dict:
     berlin_files = extract_city_files(soup)
 
     remaining = {}
@@ -104,10 +104,12 @@ def candidates_for_download(soup):
     return remaining
 
 
-def download_files(soup):
+def download_files(soup) -> None:
     to_be_downloaded = candidates_for_download(soup)
 
     data_directory = Path(require_env("RAW_DATA_PATH"))
+
+    failed = []
 
     for cohort in to_be_downloaded:
         cohort_directory = data_directory / cohort
@@ -117,9 +119,13 @@ def download_files(soup):
             logging.info("Download %s/%s", cohort, file_name)
             try:
                 urlretrieve(url, cohort_directory / file_name)
-            except URLError:
+            except OSError:
                 logging.exception("Download failed: %s", url)
+                failed.append(f"{cohort/{file_name}}")
+                continue
 
+    if failed:
+        raise RuntimeError(f"Downloads failed: {', '.join(failed)}")
 
 if __name__ == "__main__":
     soup = asyncio.run(get_existing_online_data())

@@ -95,8 +95,8 @@ SELECT
  COUNT(*) FILTER (WHERE b.host_is_superhost)::numeric
  / NULLIF(COUNT(b.host_is_superhost), 0) AS share_superhost,
 
- PERCENTILE_CONT(0.5) WITHIN GROUP (ORDER BY NULLIF(b.estimated_occupancy_l365d, '')::numeric) AS median_estimated_occupancy,
- PERCENTILE_CONT(0.5) WITHIN GROUP (ORDER BY NULLIF(b.estimated_revenue_l365d, '')::numeric) AS median_estimated_revenue
+ PERCENTILE_CONT(0.5) WITHIN GROUP (ORDER BY NULLIF(b.estimated_occupancy_l365d, NULL)::numeric) AS median_estimated_occupancy,
+ PERCENTILE_CONT(0.5) WITHIN GROUP (ORDER BY NULLIF(b.estimated_revenue_l365d, NULL)::numeric) AS median_estimated_revenue
 FROM base b
 LEFT JOIN exits e
 ON b.cohort_date = e.cohort_date

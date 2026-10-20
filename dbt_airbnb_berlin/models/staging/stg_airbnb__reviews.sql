@@ -11,5 +11,5 @@ SELECT
     CAST("date" AS DATE) AS "date",
     reviewer_id::BIGINT AS reviewer_id,
     comments,
-   '26.06.26' AS data_cohort
+    data_cohort
 FROM {{source('airbnb_raw_data', 'reviews')}}

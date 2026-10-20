@@ -1,14 +1,18 @@
+name: aa_real_dbt_10-1226
 
 services:
   pipeline:
-    build: .
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+    restart: unless-stopped
     command: standalone
-
+    user: "1000:0"
     ports:
       - "127.0.0.1:8080:8080"
 
     env_file:
-      - .env
+      - ../.env
 
     environment:
       ABSOLUTE_PROJECT_DIR: /opt/airflow/project/
@@ -18,10 +22,11 @@ services:
       AIRFLOW__CORE__DAGS_FOLDER: /opt/airflow/dags
       AIRFLOW__CORE__LOAD_EXAMPLES: "False"
       AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: sqlite:////opt/airflow/state/airflow.db
-
+      DBT_PROFILES_DIR: /opt/airflow/project/docker/
+    
     volumes:
-      - ./dags:/opt/airflow/dags:ro
-      - ./:/opt/airflow/project
+      - ../dags:/opt/airflow/dags:ro
+      - ../:/opt/airflow/project
       - airflow_state:/opt/airflow/state
 
     extra_hosts:

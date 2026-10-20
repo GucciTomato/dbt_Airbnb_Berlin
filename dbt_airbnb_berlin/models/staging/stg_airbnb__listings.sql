@@ -34,7 +34,7 @@ SELECT
    bedrooms::INT AS bedrooms,
    beds::INT AS beds,
    amenities::JSON as amenities,
-   host_since,
+   host_since::DATE AS host_since,
    {{ clean_price('price') }} AS price,
    minimum_nights::INT AS minimum_nights,
    maximum_nights::INT AS maximum_nights,
@@ -79,5 +79,5 @@ SELECT
    TO_DATE(price_quote_checkout_date, 'YYYY-MM-DD') AS price_quote_checkout_date, -- present in data from 26.03.28 onwards
    CAST(price_quote_price_per_night AS FLOAT) AS price_quote_price_per_night, -- present in data from 26.03.28 onwards
    CAST(price_quote_raw AS FLOAT) AS price_quote_raw, -- present in data from 26.03.28 onwards
-   '26.06.26' AS data_cohort
+    data_cohort
 FROM {{source('airbnb_raw_data', 'listings')}}
