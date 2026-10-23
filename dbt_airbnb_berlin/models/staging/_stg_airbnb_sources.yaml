@@ -2,7 +2,6 @@ version: 2
 
 sources:
 - name: airbnb_raw_data
-  database: airbnb_berlin_db
   schema: airbnb_raw_data
   tables:
   - name: reviews

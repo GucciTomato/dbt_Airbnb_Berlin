@@ -7,3 +7,5 @@ data_*/
 .git/
 target/
 logs/
+.terraform/
+"*.tfstate*"

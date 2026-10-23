@@ -17,18 +17,19 @@ services:
     environment:
       ABSOLUTE_PROJECT_DIR: /opt/airflow/project/
       RAW_DATA_PATH: /opt/airflow/project/data
-      DB_HOST: host.docker.internal
       AIRFLOW_HOME: /opt/airflow/state
       AIRFLOW__CORE__DAGS_FOLDER: /opt/airflow/dags
       AIRFLOW__CORE__LOAD_EXAMPLES: "False"
       AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: sqlite:////opt/airflow/state/airflow.db
       DBT_PROFILES_DIR: /opt/airflow/project/docker/
+      AWS_CONFIG_FILE: /opt/airflow/aws/config
+      AWS_SHARED_CREDENTIALS_FILE: /opt/airflow/aws/credentials
     
     volumes:
       - ../dags:/opt/airflow/dags:ro
       - ../:/opt/airflow/project
       - airflow_state:/opt/airflow/state
-
+      - ~/.aws:/opt/airflow/aws:ro
     extra_hosts:
       - "host.docker.internal:host-gateway"
 

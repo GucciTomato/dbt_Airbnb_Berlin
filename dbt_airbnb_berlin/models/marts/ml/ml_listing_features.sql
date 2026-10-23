@@ -25,14 +25,14 @@ SELECT
  s.cohort_date,
  s.cohort_index,
 
- -- Ziel bzw. Hauptvariable
+ -- Target / main variable
  s.price,
  s.price_per_person,
  s.price_source,
  s.price_change_pct,
  s.price_change_is_comparable,
 
- -- Objekt
+ -- Object
  s.room_type,
  s.property_type,
  s.accommodates,
@@ -49,12 +49,12 @@ SELECT
  a.has_elevator,
  a.allows_pets,
 
- -- Lage
+ -- Neighbourhood
  l.neighbourhood_group_cleansed,
  l.neighbourhood_cleansed,
  l.neighbourhood_key,
 
- -- Buchungsbedingungen
+ -- Booking conditions / data
  s.minimum_nights,
  s.maximum_nights,
  s.stay_type,
@@ -90,13 +90,13 @@ SELECT
  THEN (s.cohort_date - h.host_since) / 365.25
  END AS host_tenure_years,
 
- -- Historie des Listings
+ -- History of listings
  s.is_first_cohort,
  s.is_last_cohort,
  s.cohorts_since_previous,
  (s.cohort_date - l.first_seen) AS days_since_first_seen,
 
- -- Segmentierung fürs Training
+ -- Segmentation for training
  s.cohort_index = MAX(s.cohort_index) OVER () AS is_latest_cohort
 FROM {{ ref('fct_airbnb_listing_snapshots') }} s
 INNER JOIN {{ ref('dim_airbnb_listings') }} l ON s.listings_id = l.listings_id

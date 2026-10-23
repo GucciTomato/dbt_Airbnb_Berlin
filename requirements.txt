@@ -2,9 +2,10 @@ dbt-postgres==1.9.1
 sqlalchemy==2.1.4
 pandas==3.0.6
 openpyxl==3.1.5
-psycopg2-binary==2.9.13 # wenn ohne Vorkompilieren erwünscht, vorher: sudo apt install libpq-dev python3-dev build-essential
+psycopg2-binary==2.9.13 # if wanted without pre-compiling, run this before installing psycopg2: sudo apt install libpq-dev python3-dev build-essential
 python-dotenv==1.2.4
 click==8.5.0
 requests==2.34.2
 beautifulsoup4==4.15.0
 playwright==1.64.0
+boto3==1.43.118
