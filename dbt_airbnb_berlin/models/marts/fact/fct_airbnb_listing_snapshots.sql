@@ -67,7 +67,6 @@ snapshots AS (
     FROM {{ ref('int_airbnb_cleaned__listings') }} cl
     INNER JOIN cohorts co ON cl.cohort_date = co.cohort_date
 ),
-
 with_lags AS (
     SELECT
         s.*,
@@ -94,8 +93,7 @@ SELECT
     cohort_date,
     data_cohort,
     cohort_index,
-
-    -- Zustand in dieser Kohorte
+    -- Attributes of this cohort:
     last_scraped,
     calendar_last_scraped,
     price,
@@ -139,15 +137,13 @@ SELECT
     host_acceptance_rate,
     host_listings_count,
     host_total_listings_count,
-
-    -- Position in der Historie
+    -- Position in history:
     cohort_date = first_seen AS is_first_cohort,
     rn = 1 AS is_last_cohort,
     prev_cohort_date,
     cohort_index - prev_cohort_index AS cohorts_since_previous,
     prev_cohort_index IS NOT NULL AND cohort_index - prev_cohort_index > 1 AS is_reappearance,
-
-    -- Veränderungen zur Vorkohorte
+    -- Changes to previous cohort:
     price - prev_price AS price_change_abs,
     (price - prev_price) / NULLIF(prev_price, 0)::numeric AS price_change_pct,
     price_source IS NOT DISTINCT FROM prev_price_source AS price_change_is_comparable,

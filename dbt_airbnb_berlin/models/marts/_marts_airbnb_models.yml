@@ -117,3 +117,9 @@ models:
               - cohort_date
               - neighbourhood_group_cleansed
               - room_type
+  - name: ml_monthly_features
+    columns:
+      - name: month_key
+        data_tests:
+          - unique
+          - not_null

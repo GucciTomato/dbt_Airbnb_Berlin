@@ -32,5 +32,5 @@ SELECT
  m.target_month
 FROM listing_life l
 CROSS JOIN months m
-WHERE m.target_month >= DATE_TRUNC('month', l.first_seen)
+WHERE m.target_month >= DATE_TRUNC('month', l.first_seen) + INTERVAL '1 month'
 AND m.target_month <= DATE_TRUNC('month', l.last_seen)

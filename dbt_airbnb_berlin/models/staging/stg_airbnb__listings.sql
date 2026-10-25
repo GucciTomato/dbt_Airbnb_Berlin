@@ -14,9 +14,9 @@ SELECT
    host_id::BIGINT AS host_id,
    host_location,
    host_about,
-   host_response_time,
-   {{ calculate_rate('host_response_rate') }} AS host_response_rate,
-   {{ calculate_rate('host_acceptance_rate') }} AS host_acceptance_rate,
+   host_response_time, -- only present in 25.09.23 cohort
+   {{ calculate_rate('host_response_rate') }} AS host_response_rate,  -- only present in 25.09.23 cohort
+   {{ calculate_rate('host_acceptance_rate') }} AS host_acceptance_rate, -- only present in 25.09.23 cohort
    host_is_superhost::BOOLEAN AS host_is_superhost,
    host_neighbourhood,
    CAST(host_listings_count AS INT) AS host_listings_count,

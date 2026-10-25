@@ -40,3 +40,7 @@ logs_ingestion_pipeline.log
 *.tfplan
 crash.log 
 crash.*.log
+
+# ML
+optuna_reviews.db
+model_new_reviews.txt
