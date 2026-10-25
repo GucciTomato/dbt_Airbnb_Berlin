@@ -11,23 +11,13 @@ from pathlib import Path
 import click
 
 
-# Enable logging
-logging.basicConfig(
-    format="{asctime} - {levelname} - {message}",
-    style="{",
-    datefmt="%Y-%m-%d %H:%M",
-    level=logging.INFO,
-    handlers=[logging.StreamHandler(), logging.FileHandler("logs_ingestion_pipeline.log")],
-)
-
-
 # Check for existence of credentials to fail early
 load_dotenv()
 
 def require_env(key: str) -> str:
     val = os.getenv(key)
     if not val:
-        raise EnvironmentError(f"Umgebungsvariable {key} fehlt")
+        raise EnvironmentError(f"Environment variable {key} missing")
     return val
 
 # Database credentials
@@ -67,7 +57,7 @@ def create_raw_schema_tables(DSN=DSN) -> None:
             with conn:
                 with conn.cursor() as cur:
                     # Create schema
-                    cur.execute("CREATE SCHEMA IF NOT EXISTS airbnb_raw_data AUTHORIZATION airbnb_berlin")
+                    cur.execute(sql.SQL("CREATE SCHEMA IF NOT EXISTS airbnb_raw_data AUTHORIZATION {}").format(sql.Identifier(user)))
                     # Create tables
                     for table, columns in data_contract[0].items():
                         expected_columns = columns
@@ -95,29 +85,15 @@ def create_raw_schema_tables(DSN=DSN) -> None:
 
                         logging.info("Validated table %s: %d columns",table,len(actual_columns))
 
-                        actual_columns = {row[0] for row in cur.fetchall()}
-
             logging.info("Raw schema and table creation successful.")
     except Exception:
         logging.exception("Schema creation failed")
         raise
 
 
-# List existing data for ingestion
-RAW_DATA_PATH = Path(require_env("RAW_DATA_PATH")).expanduser().resolve()
-
-def find_existing_data(filepath: Path = RAW_DATA_PATH) -> dict:
-    candidates = {}
-    for directory in filepath.iterdir():
-        if directory.is_dir() and directory.name.startswith("data_"):
-            candidates[directory.name] = [f.name for f in directory.iterdir() if f.name.startswith(("listings", "reviews")) and f.name.endswith(".csv.gz")]
-    
-    return candidates
-
-
 # Check folder names
-def check_folders(folders_specified: tuple) -> None:
-        existing_folders = find_existing_data().keys()
+def check_folders(storage, folders_specified: tuple) -> None:
+        existing_folders = storage.find_existing_data().keys()
 
         invalid_folders = set(folders_specified) - set(existing_folders)
 
@@ -126,25 +102,17 @@ def check_folders(folders_specified: tuple) -> None:
         
 
 # Detect schema drift
-def read_header(folders_specified: tuple) -> list[str]:
-    existing_data = find_existing_data()
-    headers = {}
+def read_header(storage, folders_specified: tuple) -> list[str]:
+    existing_data = storage.find_existing_data()
 
-    for folder in existing_data:
-        if folder in folders_specified:
+    return {
+        folder: {file: storage.read_header(folder, file) for file in existing_data[folder]}
+        for folder in folders_specified if folder in existing_data
+    }
 
-            headers[folder] = {}
-
-            for file in existing_data[folder]:
-                with gzip.open(RAW_DATA_PATH / folder / file, "rt", encoding="utf-8", newline="") as f:
-                    header = next(csv.reader(f))
-                    headers[folder][file] = header
-
-    return headers
-
-def check_contract(folders_specified: tuple) -> None:
+def check_contract(storage, folders_specified: tuple) -> None:
     data_contract = read_data_contract()[0]
-    headers = read_header(folders_specified)
+    headers = read_header(storage, folders_specified)
     unknown_found = False
 
     for folder, files in headers.items():
@@ -163,11 +131,11 @@ def check_contract(folders_specified: tuple) -> None:
         raise ValueError("Unknown columns found – update data contract (see log)")
 
 # Ingest data from local files into the tables via temporary table
-def load_file(folders_for_ingestion: tuple) -> None:
-    check_contract(folders_for_ingestion)
-    existing_data = find_existing_data()
+def load_file(storage, folders_for_ingestion: tuple) -> None:
+    check_contract(storage, folders_for_ingestion)
+    existing_data = storage.find_existing_data()
 
-    headers = read_header(folders_for_ingestion)
+    headers = read_header(storage, folders_for_ingestion)
     for folder in folders_for_ingestion:
         data_cohort = folder.removeprefix("data_")
         for file in existing_data[folder]:
@@ -182,9 +150,8 @@ def load_file(folders_for_ingestion: tuple) -> None:
                         with conn.cursor() as cur:
                             # Temporary staging table
                             cur.execute(sql.SQL("CREATE TEMP TABLE tmp_load ({}) ON COMMIT DROP").format(column_definitions))
-                            # Copy csv into staging
-                            with gzip.open(RAW_DATA_PATH / folder / file, "rt", encoding="utf-8", newline="") as f:
-                                cur.copy_expert("COPY tmp_load FROM STDIN WITH (FORMAT csv, HEADER true)", f)
+                            # Copy csv into staging (local or S3, depending on storage)
+                            storage.copy_into_tmp(cur, folder, file)
                             # Validate row count
                             cur.execute("SELECT COUNT(*) FROM tmp_load")
                             staged_rows = cur.fetchone()[0]

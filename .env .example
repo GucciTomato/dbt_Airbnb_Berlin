@@ -1,6 +1,15 @@
-DB_HOST="localhost"
+DB_HOST= # on container Airflow pipeline: host.docker.internal; on host: localhost
 DB_NAME="airbnb_berlin_db"
-DB_USER=""
-DB_PASSWORD=""
-RAW_DATA_PATH="/data/"
-ABSOLUTE_PROJECT_DIR = ""
+PIPELINE_TARGET= # local or cloud; non-binding: can be altered at runtime
+DB_USER=
+DB_PASSWORD=
+DB_SSLMODE="prefer"
+
+RAW_DATA_PATH=
+ABSOLUTE_PROJECT_DIR = 
+ALERT_EMAIL=
+AIRFLOW_CONN_SMTP_DEFAULT=
+LOCAL_PUBLIC_IP=
+S3_BUCKET=
+AWS_REGION=
+AWS_PROFILE=

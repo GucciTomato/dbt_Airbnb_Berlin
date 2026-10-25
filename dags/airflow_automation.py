@@ -8,7 +8,7 @@ from airflow.providers.smtp.notifications.smtp import SmtpNotifier
 
 ALERT_EMAIL = os.environ["ALERT_EMAIL"]
 DBT = "/opt/airflow/dbt-venv/bin/dbt"
-DBT_DIR = "/opt/airflow/project/<ordner mit dbt_project.yml>"
+DBT_DIR = "/opt/airflow/project/dbt_airbnb_berlin"
 
 with DAG(
     dag_id="airbnb_berlin_data_ingestion_pipeline",

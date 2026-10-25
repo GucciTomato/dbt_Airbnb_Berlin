@@ -5,7 +5,7 @@ data/data_26.03.28/
 data/data_26.06.26/
 data/data*
 data_complete_zipped/
-database_pipeline.ipynb
+database_pipeline_v1_exploration.ipynb
 !database_pipeline_example.ipynb
 
 # dbt
@@ -32,3 +32,15 @@ __pycache__/
 # Logs
 *.log
 logs_ingestion_pipeline.log
+
+# terraform
+**.terraform/
+*.tfstate*
+".tfstate.*
+*.tfplan
+crash.log 
+crash.*.log
+
+# ML
+optuna_reviews.db
+model_new_reviews.txt

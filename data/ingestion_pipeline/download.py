@@ -9,18 +9,6 @@ from urllib.request import urlretrieve
 from bs4 import BeautifulSoup
 from playwright.async_api import async_playwright, TimeoutError as PlaywrightTimeoutError
 
-from load_local_data import require_env, find_existing_data
-
-
-# Enable logging
-logging.basicConfig(
-    format="{asctime} - {levelname} - {message}",
-    style="{",
-    datefmt="%Y-%m-%d %H:%M",
-    filename="logs_ingestion_pipeline.log",
-    level=logging.INFO,
-    force = True
-)
 
 url = "https://insideairbnb.com/en/get-the-data/"
 
@@ -68,7 +56,7 @@ def extract_city_files(soup) -> list:
 
 
 
-def candidates_for_download(soup) -> dict:
+def candidates_for_download(soup, storage) -> dict:
     berlin_files = extract_city_files(soup)
 
     remaining = {}
@@ -80,7 +68,7 @@ def candidates_for_download(soup) -> dict:
         file_cohort = "data_" + re.sub(r'/data/.*', '', file_cohort)
         online_data[file_cohort][file['file']] = file['url']
 
-    local_data = find_existing_data()
+    local_data = storage.find_existing_data()
     logging.debug("Online-cohorts: %s", sorted(online_data))
     logging.debug("Local cohorts: %s", sorted(local_data))
 
@@ -104,25 +92,19 @@ def candidates_for_download(soup) -> dict:
     return remaining
 
 
-def download_files(soup) -> None:
-    to_be_downloaded = candidates_for_download(soup)
-
-    data_directory = Path(require_env("RAW_DATA_PATH"))
+def download_files(soup, storage) -> None:
+    to_be_downloaded = candidates_for_download(soup, storage)
 
     failed = []
 
     for cohort in to_be_downloaded:
-        cohort_directory = data_directory / cohort
-        cohort_directory.mkdir(parents=True, exist_ok=True)
-        
         for file_name, url in to_be_downloaded[cohort].items():
             logging.info("Download %s/%s", cohort, file_name)
             try:
-                urlretrieve(url, cohort_directory / file_name)
-            except OSError:
+                storage.store_file(cohort, file_name, url)
+            except Exception:
                 logging.exception("Download failed: %s", url)
-                failed.append(f"{cohort/{file_name}}")
-                continue
+                failed.append(f"{cohort}/{file_name}")
 
     if failed:
         raise RuntimeError(f"Downloads failed: {', '.join(failed)}")

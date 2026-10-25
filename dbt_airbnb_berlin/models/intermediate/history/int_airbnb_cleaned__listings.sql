@@ -44,7 +44,7 @@ SELECT
     hist.property_type,
     hist.room_type,
     hist.accommodates,
-    NULLIF(REGEXP_REPLACE(hist.bathrooms_text, '[^0-9\.]', NULL, 'g'), NULL)::numeric AS number_of_bathrooms,
+    NULLIF(REGEXP_REPLACE(hist.bathrooms_text, '[^0-9\.]', '', 'g'), '')::numeric AS number_of_bathrooms,
     CASE WHEN hist.bathrooms_text IS NOT NULL THEN hist.bathrooms_text ILIKE '%shared%' END AS has_shared_bathroom,
     hist.bedrooms,
     hist.beds,
