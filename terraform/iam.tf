@@ -1,58 +1,3 @@
-data "aws_vpc" "default" {
-  default = true
-}
-
-resource "aws_s3_bucket" "airbnb_berlin_data" {
-  bucket        = local.s3_bucket_name
-  force_destroy = true
-}
-
-resource "aws_db_instance" "postgres" {
-  identifier             = "airbnb-berlin-db"
-  allocated_storage      = 20
-  engine                 = "postgres"
-  engine_version         = "18"
-  instance_class         = "db.t4g.micro"
-  db_name                = "airbnb_berlin_db"
-  username               = local.db_user_name
-  password               = local.db_password
-  vpc_security_group_ids = [aws_security_group.rds_sg.id]
-  skip_final_snapshot    = true
-  publicly_accessible    = true
-}
-
-resource "aws_security_group" "rds_sg" {
-  name        = "allow-local-to-rds"
-  description = "Allows local access to the database"
-  vpc_id      = data.aws_vpc.default.id
-
-  ingress {
-    from_port   = 5432
-    to_port     = 5432
-    protocol    = "tcp"
-    cidr_blocks = ["${local.my_public_ip}/32"]
-  }
-
-  egress {
-    from_port   = 0
-    to_port     = 0
-    protocol    = "-1"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
-}
-
-# for role: RDS to s3
-locals {
-  rds_assume_role_policy = jsonencode({
-    Version = "2012-10-17"
-    Statement = [{
-      Effect    = "Allow"
-      Principal = { Service = "rds.amazonaws.com" }
-      Action    = "sts:AssumeRole"
-    }]
-  })
-}
-
 resource "aws_iam_role" "rds_s3_import" {
   name               = "rds-s3-import"
   assume_role_policy = local.rds_assume_role_policy
@@ -132,6 +77,74 @@ resource "aws_iam_user_policy" "pipeline_s3_policy" {
         aws_s3_bucket.airbnb_berlin_data.arn,
         "${aws_s3_bucket.airbnb_berlin_data.arn}/*"
       ]
+    }]
+  })
+}
+
+resource "aws_iam_user_policy" "pipeline_ssm_policy" {
+  name = "allow-ssm-tunnel"
+  user = aws_iam_user.pipeline_local_user.name
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [{
+      Effect = "Allow"
+      Action = [
+        "ssm:StartSession",
+        "ssm:TerminateSession",
+        "ssm:ResumeSession",
+        "ssm:DescribeSessions",
+        "ssm:DescribeInstanceInformation",
+        "ec2:DescribeInstances",
+        "ec2:StartInstances",
+        "ec2:StopInstances"
+      ]
+      Resource = "*"
+    }]
+  })
+}
+
+resource "aws_iam_role" "bastion" {
+  name = "bastion-ssm"
+
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [{
+      Effect    = "Allow"
+      Principal = { Service = "ec2.amazonaws.com" }
+      Action    = "sts:AssumeRole"
+    }]
+  })
+}
+
+resource "aws_iam_role_policy_attachment" "bastion_ssm" {
+  role       = aws_iam_role.bastion.name
+  policy_arn = "arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore"
+}
+
+resource "aws_iam_instance_profile" "bastion" {
+  name = "bastion-ssm"
+  role = aws_iam_role.bastion.name
+}
+
+resource "aws_instance" "bastion" {
+  ami                    = data.aws_ami.al2023.id
+  instance_type          = "t4g.nano"
+  subnet_id              = aws_subnet.public.id
+  vpc_security_group_ids = [aws_security_group.bastion_sg.id]
+  iam_instance_profile   = aws_iam_instance_profile.bastion.name
+
+  tags = { Name = "airbnb-berlin-bastion" }
+}
+
+# for role: RDS to s3
+locals {
+  rds_assume_role_policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [{
+      Effect    = "Allow"
+      Principal = { Service = "rds.amazonaws.com" }
+      Action    = "sts:AssumeRole"
     }]
   })
 }

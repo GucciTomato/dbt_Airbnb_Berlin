@@ -2,6 +2,12 @@ FROM apache/airflow:3.3.2-python3.12
 
 ENV PLAYWRIGHT_BROWSERS_PATH=/opt/airflow/ms-playwright
 
+# Install libgomp.so.1 for local LightGBM before pip requirements.txt
+USER root
+RUN apt-get update && apt-get install -y --no-install-recommends libgomp1 \
+    && apt-get install -y --no-install-recommends docker.io \
+    && rm -rf /var/lib/apt/lists/*
+
 USER airflow
 
 # dbt venv
@@ -15,7 +21,7 @@ RUN python -m venv /opt/airflow/app-venv \
     && /opt/airflow/app-venv/bin/playwright install chromium \
     && mkdir -p /opt/airflow/state && chmod -R g+rwX /opt/airflow/state
 
-# Installing system libraries for chromium requires root user
+# Installing system libraries for chromium requires root user again
 USER root
 RUN /opt/airflow/app-venv/bin/playwright install-deps chromium && rm -rf /var/lib/apt/lists/*
 USER airflow

@@ -44,3 +44,4 @@ crash.*.log
 # ML
 optuna_reviews.db
 model_new_reviews.txt
+model_*.txt

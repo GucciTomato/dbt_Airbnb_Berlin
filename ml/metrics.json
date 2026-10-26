@@ -1,0 +1,12 @@
+{
+  "model": {
+    "MAE": 0.669,
+    "PoissonDeviance": 0.8743,
+    "Spearman": 0.7827
+  },
+  "baseline": {
+    "MAE": 0.7446,
+    "PoissonDeviance": 1.4456,
+    "Spearman": 0.7465
+  }
+}

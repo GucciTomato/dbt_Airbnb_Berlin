@@ -10,7 +10,8 @@ services:
     user: "1000:0"
     ports:
       - "127.0.0.1:8080:8080"
-
+    group_add:
+      - "${DOCKER_GID}"
     env_file:
       - ../.env
 
@@ -24,12 +25,15 @@ services:
       DBT_PROFILES_DIR: /opt/airflow/project/docker/
       AWS_CONFIG_FILE: /opt/airflow/aws/config
       AWS_SHARED_CREDENTIALS_FILE: /opt/airflow/aws/credentials
+      DB_HOST: host.docker.internal
+      DB_PORT: 15433
     
     volumes:
       - ../dags:/opt/airflow/dags:ro
       - ../:/opt/airflow/project
       - airflow_state:/opt/airflow/state
       - ~/.aws:/opt/airflow/aws:ro
+      - /var/run/docker.sock:/var/run/docker.sock
     extra_hosts:
       - "host.docker.internal:host-gateway"
 

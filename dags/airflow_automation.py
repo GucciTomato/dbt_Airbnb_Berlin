@@ -8,12 +8,13 @@ from airflow.providers.smtp.notifications.smtp import SmtpNotifier
 
 ALERT_EMAIL = os.environ["ALERT_EMAIL"]
 DBT = "/opt/airflow/dbt-venv/bin/dbt"
-DBT_DIR = "/opt/airflow/project/dbt_airbnb_berlin"
+DBT_DIR = "/opt/airflow/project/dbt"
+ML_DIR = "/opt/airflow/project/ml"
 
 with DAG(
     dag_id="airbnb_berlin_data_ingestion_pipeline",
     start_date=datetime(2026, 10, 1),
-    schedule="@weekly",
+    schedule=None,
     catchup=False,
     default_args={"retries": 2, "retry_delay": timedelta(minutes=30)},
 ) as dag:
@@ -22,6 +23,8 @@ with DAG(
         task_id="ingestion_pipeline",
         bash_command="/opt/airflow/app-venv/bin/python ingestion_pipeline.py",
         cwd="/opt/airflow/project/data/ingestion_pipeline",
+        retries=2,
+        retry_delay=timedelta(seconds=30),
     )
 
     dbt_build = BashOperator(
@@ -35,4 +38,22 @@ with DAG(
         ),
     )
 
-    ingestion_pipeline_task >> dbt_build
+    train_model = BashOperator(
+        task_id="train_model",
+        bash_command=f"/opt/airflow/app-venv/bin/python {ML_DIR}/training.py",
+        cwd=ML_DIR,
+        retries=0,
+        on_failure_callback=SmtpNotifier(
+            to=ALERT_EMAIL,
+            subject="Airflow: {{ ti.dag_id }} / {{ ti.task_id }} fehlgeschlagen",
+        ),
+    )
+
+    shutdown = BashOperator(
+        task_id="shutdown",
+        # detach so the task finishes before the container goes down
+        bash_command="nohup /opt/airflow/project/stop_pipeline.sh > /tmp/shutdown.log 2>&1 &",
+        trigger_rule="all_done",
+    )
+
+    ingestion_pipeline_task >> dbt_build >> train_model >> shutdown
