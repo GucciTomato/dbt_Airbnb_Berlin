@@ -1,7 +1,6 @@
 # Imports
 import preprocessing
 import logging
-import pandas as pd
 import json
 import numpy as np
 from sklearn.metrics import mean_absolute_error, mean_poisson_deviance
@@ -27,7 +26,7 @@ DEFAULT_PARAMS = {
 }
 
 FIXED_PARAMS = {
-    "objective": "poisson",   # count data with many zeros
+    "objective": "poisson",
     "metric": "poisson",
     "verbosity": -1,
 }
@@ -85,7 +84,7 @@ def main():
     logger.info("model %s", model_score)
     logger.info("baseline %s", baseline_score)
 
-    # a model that cannot beat "same as last month" is not worth deploying
+    # Heuristic: a model that cannot beat Poisson Deviance from previous run is not worth deploying
     if model_score["PoissonDeviance"] >= baseline_score["PoissonDeviance"]:
         raise RuntimeError(f"model did not beat the baseline ({model_score['PoissonDeviance']} vs {baseline_score['PoissonDeviance']}), keeping the previous model")
 

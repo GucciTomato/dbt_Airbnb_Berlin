@@ -13,6 +13,8 @@ For a completely cloud native set up one could replace Airflow with Step Functio
 
  I have outsourced the retry logic of the DAG after failure from Airflow to a Shell script which is able to shut down Airflow after success. This has three reasons: data security: airflow and VPN only up for a few hours, the rest of the time PC is isolated from AWS, zero ressource consumption and robustness...
 
+ one of the trade offs was that I thought about automatic stopping of the airflow after dag completion as airflow shutting itself down can be fragile. I first tried to use docker.io with socket so external services could talk to the docker deamon without root rights, but this means de facto root access on the host which is a security concern so I kept everything in one startup shell script at the price of one script having to run until the dag completes which could take weeks in case of missing data. Here a more elegant solution has to be found in the future but for the mean time it was a tradeoff between realisism and complexity.
+
  ### AWS?
 
  nstance Connect Endpoint? Max time up for tunnel 1h... SSM Session Manager

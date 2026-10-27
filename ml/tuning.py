@@ -56,7 +56,6 @@ def main():
         )
 
         pred = model.predict(X_val, num_iteration=model.best_iteration)
-        # same objective the model is trained on, so tuning and training agree
         return mean_poisson_deviance(y_val, np.clip(pred, 0.05, None))
 
     study = optuna.create_study(

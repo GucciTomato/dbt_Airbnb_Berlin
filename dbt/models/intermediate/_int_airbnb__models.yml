@@ -110,3 +110,33 @@ models:
       - name: comments
       - name: data_cohort
       - name: review_first_seen_cohort
+  - name: int_airbnb_current__listings
+    columns:
+      - name: listings_id
+        data_tests:
+          - unique
+          - not_null
+      - name: cohort_date
+        data_tests:
+          - not_null
+  - name: int_airbnb__monthly_features
+    columns:
+      - name: month_key
+        data_tests:
+          - unique
+          - not_null
+      - name: listings_id
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('dim_airbnb_listings')
+                field: listings_id
+      - name: target_month
+        data_tests:
+          - not_null
+  - name: int_airbnb_current__listings_descriptions
+    columns:
+      - name: listings_id
+        data_tests:
+          - not_null

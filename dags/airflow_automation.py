@@ -24,7 +24,7 @@ with DAG(
         bash_command="/opt/airflow/app-venv/bin/python ingestion_pipeline.py",
         cwd="/opt/airflow/project/data/ingestion_pipeline",
         retries=2,
-        retry_delay=timedelta(seconds=30),
+        retry_delay=timedelta(seconds=30), # for production setting: weeks=1
     )
 
     dbt_build = BashOperator(
@@ -49,11 +49,4 @@ with DAG(
         ),
     )
 
-    shutdown = BashOperator(
-        task_id="shutdown",
-        # detach so the task finishes before the container goes down
-        bash_command="nohup /opt/airflow/project/stop_pipeline.sh > /tmp/shutdown.log 2>&1 &",
-        trigger_rule="all_done",
-    )
-
-    ingestion_pipeline_task >> dbt_build >> train_model >> shutdown
+    ingestion_pipeline_task >> dbt_build >> train_model

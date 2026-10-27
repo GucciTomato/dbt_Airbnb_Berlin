@@ -4,7 +4,7 @@
  )
 }}
 
-SELECT DISTINCT ON (reviews_id)
+SELECT DISTINCT ON (reviews_id, listing_id)
     reviews_id,
     surrogate_key,
     listing_id as listings_id,

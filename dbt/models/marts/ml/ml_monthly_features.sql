@@ -83,15 +83,12 @@ assembled AS (
     INNER JOIN {{ ref('fct_airbnb_listing_snapshots') }} s ON s.snapshot_key = f.feature_snapshot_key
     INNER JOIN {{ ref('int_airbnb_cleaned__listings') }} l ON l.listings_id = f.listings_id AND l.cohort_date = f.feature_cohort_date
     LEFT JOIN {{ ref('fct_airbnb_reviews_monthly') }} rm ON rm.listings_id = f.listings_id AND rm.review_month = f.target_month 
-    LEFT JOIN building_type_counts b ON b.building_type = f.building_type
     --LEFT JOIN {{ ref('dim_airbnb_hosts') }} h ON h.host_id = s.host_id
 )
 
 SELECT 
     a.*,
-    LAG(a.new_reviews, 1) OVER w AS new_reviews_lag_1,
-    --LAG(a.new_reviews, 2) OVER w AS new_reviews_lag_2,
-    --LAG(a.new_reviews, 3) OVER w AS new_reviews_lag_3,
+    LAG(a.new_reviews, 1) OVER w AS new_reviews_lag,
     AVG(a.new_reviews) OVER (
         PARTITION BY a.listings_id ORDER BY a.target_month ROWS BETWEEN 3 PRECEDING AND 1 PRECEDING
     ) AS new_reviews_avg_prev_3
