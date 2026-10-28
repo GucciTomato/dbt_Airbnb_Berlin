@@ -27,6 +27,17 @@ building_type_counts AS (
     FROM feature_cohort
     GROUP BY building_type
 ),
+feature_cohort_mapped AS (
+    SELECT
+        f.*,
+        CASE
+            WHEN b.n < 100 THEN 'other'
+            ELSE f.building_type
+        END AS building_type_mapped
+    FROM feature_cohort f
+    LEFT JOIN building_type_counts b
+        ON b.building_type = f.building_type
+),
 assembled AS (
     SELECT 
         f.month_key,
@@ -36,7 +47,7 @@ assembled AS (
         f.target_month - f.feature_cohort_date AS feature_lag_days,
         COALESCE(rm.reviews_count, 0) AS new_reviews,  -- target
         s.room_type,
-        CASE WHEN b.n < 100 THEN 'other' ELSE f.building_type END AS building_type,
+        f.building_type_mapped AS building_type,
         s.accommodates,
         l.number_of_bathrooms as bathrooms,
         l.bedrooms,
@@ -79,7 +90,7 @@ assembled AS (
         s.cohorts_since_previous,
         --CASE WHEN h.host_since IS NOT NULL THEN (f.target_month - h.host_since) / 365.25 END AS host_tenure_years --only in cohort 25.09.23, not avaible in later test data; kept in case of re-occurence
         (f.target_month - l.first_seen) AS days_since_first_seen
-    FROM feature_cohort f
+    FROM feature_cohort_mapped f
     INNER JOIN {{ ref('fct_airbnb_listing_snapshots') }} s ON s.snapshot_key = f.feature_snapshot_key
     INNER JOIN {{ ref('int_airbnb_cleaned__listings') }} l ON l.listings_id = f.listings_id AND l.cohort_date = f.feature_cohort_date
     LEFT JOIN {{ ref('fct_airbnb_reviews_monthly') }} rm ON rm.listings_id = f.listings_id AND rm.review_month = f.target_month 
@@ -88,7 +99,7 @@ assembled AS (
 
 SELECT 
     a.*,
-    LAG(a.new_reviews, 1) OVER w AS new_reviews_lag,
+    LAG(a.new_reviews, 1) OVER w AS new_reviews_lag_1,
     AVG(a.new_reviews) OVER (
         PARTITION BY a.listings_id ORDER BY a.target_month ROWS BETWEEN 3 PRECEDING AND 1 PRECEDING
     ) AS new_reviews_avg_prev_3

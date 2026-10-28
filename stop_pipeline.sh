@@ -1,4 +1,6 @@
 #!/usr/bin/env bash
+export AWS_PROFILE="${AWS_PROFILE:-terraform}"
+export AWS_REGION="${AWS_REGION:-eu-central-1}"
 set -e
 cd "$(dirname "$0")"
 

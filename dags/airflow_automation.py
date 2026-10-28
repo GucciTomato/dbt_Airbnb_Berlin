@@ -24,7 +24,7 @@ with DAG(
         bash_command="/opt/airflow/app-venv/bin/python ingestion_pipeline.py",
         cwd="/opt/airflow/project/data/ingestion_pipeline",
         retries=2,
-        retry_delay=timedelta(seconds=30), # for production setting: weeks=1
+        retry_delay=timedelta(seconds=30), # for debugging e.g. seconds=30
     )
 
     dbt_build = BashOperator(
@@ -34,7 +34,7 @@ with DAG(
         retries=0,
         on_failure_callback=SmtpNotifier(
             to=ALERT_EMAIL,
-            subject="Airflow: {{ ti.dag_id }} / {{ ti.task_id }} fehlgeschlagen",
+            subject="Airflow: {{ ti.dag_id }} / {{ ti.task_id }} failed",
         ),
     )
 
@@ -45,7 +45,7 @@ with DAG(
         retries=0,
         on_failure_callback=SmtpNotifier(
             to=ALERT_EMAIL,
-            subject="Airflow: {{ ti.dag_id }} / {{ ti.task_id }} fehlgeschlagen",
+            subject="Airflow: {{ ti.dag_id }} / {{ ti.task_id }} failed",
         ),
     )
 

@@ -18,4 +18,4 @@ SELECT DISTINCT ON (reviews_id, listing_id)
     TO_DATE(data_cohort, 'YY.MM.DD') AS first_seen_cohort,
     data_cohort
 FROM {{ ref('stg_airbnb__reviews') }}
-ORDER BY reviews_id, TO_DATE(data_cohort, 'YY.MM.DD')
+ORDER BY reviews_id, listing_id, TO_DATE(data_cohort, 'YY.MM.DD')

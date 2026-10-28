@@ -16,9 +16,7 @@ dbt_packages/
 
 # ideas
 ideen.odt
-
-# construction plan
-bauplan/
+.~lock.ideen.odt#
 
 # virtual environment
 .venv/
@@ -45,3 +43,6 @@ crash.*.log
 optuna_reviews.db
 model_new_reviews.txt
 model_*.txt
+
+# runtime artifacts
+tunnel.pid

@@ -1,100 +1,151 @@
-# Airbnb Berlin data project
+# Airbnb Berlin dbt project
 
 This project presents an automated pipeline which scrapes the Airbnb Berlin listings and review data from the insideairbnb.com website every three months (when new data gets published), stores it either locally or in the cloud, transforms it with dbt and finally trains a ML-model on the aggregated data by month to predict review activity for the following months. The project uses Python, dbt, Docker, Airflow and Terraform to achieve this. What makes the dataset an intriguing choice to work with is that it represents real world data with common problems associated with it: inconsistent metadata, schema drift and missingness, which pose an interesting challenge during the necessary cleansing and preparation. 
 
-## Ingestion pipeline
+## Setup
 
-### Scrape process + download scripts
+The AWS CLI needs a profile named `terraform`:
 
-### Airflow 
-This hybrid set-up is chosen under the assumption that regular database-querying of the mart data during day to day operations e.g. by the analytics team is a necessity. If the setup is only used for model retraining like described in the Airflow DAG then propably a cloud native only solution would be cheaper and would have less overhead. In this case, a Step Functions script with a ECS Fargate Task (which stops itself after completion) could replace Airflow.
-
-For a completely cloud native set up one could replace Airflow with Step Functions script with ECS Fargate Task. But for the mean time the cloud task seems to be cheaper and have less overhead.
-
- I have outsourced the retry logic of the DAG after failure from Airflow to a Shell script which is able to shut down Airflow after success. This has three reasons: data security: airflow and VPN only up for a few hours, the rest of the time PC is isolated from AWS, zero ressource consumption and robustness...
-
- one of the trade offs was that I thought about automatic stopping of the airflow after dag completion as airflow shutting itself down can be fragile. I first tried to use docker.io with socket so external services could talk to the docker deamon without root rights, but this means de facto root access on the host which is a security concern so I kept everything in one startup shell script at the price of one script having to run until the dag completes which could take weeks in case of missing data. Here a more elegant solution has to be found in the future but for the mean time it was a tradeoff between realisism and complexity.
-
- ### AWS?
-
- nstance Connect Endpoint? Max time up for tunnel 1h... SSM Session Manager
-
-## dbt
-
-In this setup I have chosen a separate database instead of dbt seeds is because of the massive volume of the Airbnb Berlin datasets. Even though official metadata exists it is incomplete and therefore to be treated with care.
-
-In dbt I use three layers to mark the process from complete raw data cohorts (with PII removed) in staging to transformed data in intermediate up to the mart layer with aggregated cleaned data for business level analysis and machine learning.
-
-To get an overview of the complete model sequence and dependencies, please use:
-```
-dbt docs generate
-dbt docs serve --port 8081
+```bash
+aws configure --profile terraform
 ```
 
-## ML
+Create an `.env` file in the project root and fill it with the `.env.example` variable credentials. Terraform reads it too.
 
-follows the principle of a forward walking evaluation: the newest cohort is scored once as test, before it is used for tuning or training. On the next run it shifts to validation and later into the training set, so no cohort is evaluated twice.
+`DB_HOST` and `DB_PORT` point at the local end of the SSM tunnel, as the database has no public endpoint.
 
-I used review activity as the target as it might represent a practical proxy for non available booking data [source???]. The data contains availability features but they are a poor choice, first because they are an aggregated statistic only published once for every cohort and secondly can contain blocked time windows by the host or might be unavailable because of minimum night constraints.
+For the AWS infrastructure, run:
 
-certain data does not change over cohorts, but certain data does so a complete data-leakage free ml tuning is a real challenge here.
-
-    • Problem: geblockt kann gebucht heißen oder vom Anbieter selber geblockt. Zwar haben Anbieter ökonomisch betrachtet durchaus einen Anreiz ihr Apartement als verfügbar zu markieren, wenn es auch frei ist, um Geld zu verdienen, aber davon kann in letzter Instanz nicht ausgegangen werden. Diese Ungewissheit verschlechtert die Vorhersagegüte.
-    • Zielvariable: Reviewaktivität (sagt nichts über unterschiedliche Reviewer aus; Authentizität und Bewertung) -> Proxy für Beliebtheit oder Auslastung?
-
-    Was bewusst draußen bleibt (Leakage): reviews_per_month, last_review, days_since_last_review und die estimated_*-Spalten. Alle werden gemeinsam mit der Reviewanzahl fortgeschrieben und würden das Ziel teilweise enthalten.
-
-    Ansatz ist Gradient Boosting (LightGBM oder XGBoost) auf der flachen Monatstabelle, da sehr stark auf Tabellen und latente Features lernen können, mit dem Monat als Feature und Lag-Variablen für die Vorgeschichte. Das ist bei Panel-Daten mit vielen Einheiten und kurzen Reihen (später mit mehr zeitlichen Daten könnte man Zeitreihenmodelle machen, Prophet z.B.)
-
-Finetuning is done manually after email alert
-
-
-## How to set everything up
-
-To set up a cron job to automate the workflow every three months, with Linux/macOS use 
-```
-crontab -e 
+```bash
+cd terraform
+terraform init
+terraform apply
 ```
 
-in Windows the Task Scheduler can be used, and type:
-```
-0 0 1 */3 * /path/to/local/project/run_pipeline.sh
-```
+This creates a VPC with private subnets, the RDS instance, an S3 bucket, a
+`t4g.nano` bastion reachable only through SSM, and the IAM roles. Creating
+RDS will probably take a few minutes.
 
-give scripts execution rights:
+Then make the scripts executable:
+
+```bash
+cd ..
 chmod +x start_pipeline.sh stop_pipeline.sh
+```
+
+In the beginning a one-time database setup is required: the S3 import extension has to be enabled once. To do this, open the tunnel first:
+
+```bash
+set -a; source .env; set +a
+BASTION_ID=$(terraform -chdir=terraform output -raw bastion_id)
+RDS_HOST=$(terraform -chdir=terraform output -raw rds_address)
+
+aws ssm start-session --target "$BASTION_ID" \
+  --document-name AWS-StartPortForwardingSessionToRemoteHost \
+  --parameters "host=$RDS_HOST,portNumber=5432,localPortNumber=$DB_PORT"
+```
+
+Then, in a second terminal:
+
+```bash
+set -a; source .env; set +a
+PGPASSWORD="$DB_PASSWORD" psql -h localhost -p "$DB_PORT" -U "$DB_USER" \
+  -d "$DB_NAME" -c 'CREATE EXTENSION IF NOT EXISTS aws_s3 CASCADE;'
+```
+
+You can close the tunnel with Ctrl+C afterwards. To run dbt and ML locally without AWS, set `PIPELINE_TARGET=local`, point `DB_HOST`/`DB_PORT` at a local Postgres and skip AWS infrastructure setup. Raw files are then stored on disk instead of S3, and `COPY FROM STDIN` replaces the S3 import.
 
 
-cd terraform/
-Install Terraform 
+## Running the pipeline
 
+`start_pipeline.sh` does everything: it boots the bastion, opens the SSM
+tunnel, starts Airflow, triggers the DAG, waits for it to finish and then
+calls `stop_pipeline.sh`, which tears down the container, the tunnel and
+the bastion.
 
+```bash
+./start_pipeline.sh
+```
 
-for docker Gid:
-echo "DOCKER_GID=$(stat -c '%g' /var/run/docker.sock)" >> .env
+The DAG runs three tasks in order: ingestion, `dbt build`, model training.
+The ingestion task exits non-zero when no new cohort is available, so
+Airflow retries it up to three times a week apart as the project publishes the data irregularly within the quarter.
 
+For the pipeline to automatically start every three months and not have a container up and running empty for the whole time frame, one can schedule it with cron, under linux/macOS with `crontab -e`: 
+```
+0 9 1 1,4,7,10 * /path/to/project/start_pipeline.sh. 
+```
+On Windows use the Task Scheduler.
 
-cd ../docker
-docker build
-docker compose up --env-file ../.env
+To inspect things by hand:
 
+```bash
+# Airflow UI, while the container is up
+http://localhost:8080
 
+# model dependency lineage and documentation
+docker compose -f docker/compose.yaml exec -w /opt/airflow/project/dbt pipeline \
+  /opt/airflow/dbt-venv/bin/dbt docs generate
+docker compose -f docker/compose.yaml exec -w /opt/airflow/project/dbt pipeline \
+  /opt/airflow/dbt-venv/bin/dbt docs serve --port 8081
+```
 
-für RDS muss einmalig:
+## Architecture
 
-CREATE EXTENSION IF NOT EXISTS aws_s3 CASCADE; 
+![Architecture overview](./assets/architecture_overview.svg)
 
-damit der ZUgriff auf RDS klappt
+Quarterly, one cohort at a time: 
 
+1. the Ingestion task downloads new listing and review files, streams them to S3 
+    or the local data/ directory and loads them into `airbnb_raw_data` via `aws_s3.table_import_from_s3` or via the Postgres `COPY` command. A data contract in YAML detects schema drift before anything is written.
+2. dbt types and cleans the raw text columns (staging), applies the
+   business logic once across all cohorts (intermediate) and builds the
+   dimensions, facts and the ML feature table (marts).
+3. During training a LightGBM model is fit on the monthly feature table and only
+   saves it if it beats the previous months baseline. Otherwise it is recommended to finetune the model (manual step), a sample script is provided.
 
-set a dbt profile in profiles.yml in: ~/.dbt/profiles.yml
+## Design decisions
+
+### Database related
+
+**A database instead of seeds:** In this setup I have chosen a separate database instead of dbt seeds because of the massive volume of the datasets. Even though official metadata exists it is incomplete, so the column contract lives in the project and is checked on every load.
+
+**SSM Session Manager for database access.** The RDS instance has no public endpoint and no inbound security group rule; access goes through a port forward over the bastion. EC2 Instance Connect Endpoint was the alternative but has a 1h session limit. For a more realistic production setup in the future one could perhaps go for a low-config peer-to-peer VPN solution, which would be more initial setup but afterwards more comfortable because one would not need start an ssm session every time before querying.
+
+### Pipeline related
+
+**Airflow locally, data in AWS**: This hybrid setup assumes the mart layer is
+queried in day to day business operations e.g. by analysts, which is what keeps RDS around. For model retraining alone, a cloud-native setup would be cheaper and simpler —  e.g. Step Functions with a self-terminating ECS Fargate task could replace Airflow entirely.
+
+**Orchestration the DAG trigger by shell script, not by Airflow itself.** A shell script is responsible for booting the stack and tearing everything down afterwards. I have gone for this design to keep things a little bit more realistic: with only four DAG runs a year it would be a waste of resources to keep the container up and running all the time. Airflow shutting itself down would likely be fragile. The price of the simpler route is one script that stays open until the DAG finishes, which can be weeks if no new data appears. Outside those windows the machine has no open path into AWS.
+
+### ML related
+
+**Review activity as the target.** Booking data is not public, and
+availability is ambiguous because blocked can mean booked or withheld by the
+host or available only under specific conditions e.g. long term stay. Review counts seem to be the better proxy, and unlike price they have no
+gaps and one consistent definition across cohorts. The target is a count
+with about 70 percent zeros, so the model trains on a Poisson objective and
+is judged on Poisson deviance.
+
+**Walk-forward evaluation.** The newest cohort is scored once as test
+before it is ever used for tuning or training; on the next run it becomes
+validation and later training data, so no cohort is evaluated twice.
+
+**Tuning is manual, retraining is automatic.** Training runs with fixed
+parameters on every new cohort and refuses to save a model that loses to
+the baseline. Hyperparameter search is a separate script, started by hand
+after the failure mail — tuning on every run would cost hours and make
+consecutive runs incomparable.
 
 ## Future steps
 
-* finetune ML with more hyperparameter and adaptive search algorithm
-* put ML training into the cloud (e.g. with airflow.providers.amazon.aws.operators.sagemaker)
-* implement agentic sytem with LangGraph for automated handling of Airflow failures e.g. ascertain problem type (software problem, database problem...) and proposing changes (e.g. updating old web url) code changes via Pull requests that will be reviewed by humans
+* finetune ML with more hyperparameter and an adaptive search algorithm.
+* Move training to the cloud, e.g. via
+  `airflow.providers.amazon.aws.operators.sagemaker`.
+* Monitor feature drift across cohorts — not meaningful yet with five of them.
+* It would be cool to have an agentic layer (LangGraph) for Airflow failures: to classify the failure, then open a pull request with a proposed fix, such as an updated source URL, for a human to review.
 
-hypothetically, if data would be really queried by analytics team:
-* implement e.g. Tailscale as a zero-config peer-to-peer VPN solution, because even though it has more initial setup overhead afterwards it is more comfortable because one does not need to start an ssm session every time before sql querying
-* 
+If the mart layer were really queried by an analytics team:
+
+* Replace SSM Session Manager with Tailscale or another VPN mesh network solution
