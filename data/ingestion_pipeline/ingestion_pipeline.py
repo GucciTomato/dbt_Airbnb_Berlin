@@ -5,6 +5,7 @@ import load_local_data
 from storage import get_storage
 import logging
 from pathlib import Path
+import sys
 
 LOG_FILE = Path(__file__).resolve().parent / "logs_ingestion_pipeline.log"
 
@@ -20,7 +21,7 @@ logging.basicConfig(
 @click.argument("folders", nargs=-1)
 @click.option("--all", "load_all", is_flag=True, help="(Re-)load all cohorts.")
 @click.option("--target", type=click.Choice(["local", "cloud"]), envvar="PIPELINE_TARGET", default="local", show_envvar=True, show_default=True)
-def ingestion_pipeline(folders, load_all, target):
+def ingestion_pipeline(folders, load_all, target) -> None:
     """Download new data from Inside Airbnb and load them into raw tables.
 
     \b
@@ -53,7 +54,7 @@ def ingestion_pipeline(folders, load_all, target):
 
     if not folders:
         click.echo("Nothing new to load.")
-        return
+        sys.exit(1) # let Airflow retry so the interval check for new data applies
 
     load_local_data.load_file(storage, tuple(folders))
     click.echo(f"Ingestion successful: {', '.join(folders)}")

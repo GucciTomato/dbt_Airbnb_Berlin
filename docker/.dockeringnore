@@ -1,11 +1,16 @@
 .env
 .venv/
 data_*/
+data/
 **/*.log
 **/__pycache__/
 **/.ipynb_checkpoints/
 .git/
 target/
 logs/
+*.log
+*.db
+ml/model_*.txt
+ml/optuna_*.db
 .terraform/
 "*.tfstate*"

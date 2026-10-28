@@ -3,7 +3,7 @@ version: 2
 sources:
 - name: airbnb_raw_data
   schema: airbnb_raw_data
+  description: Raw Inside Airbnb data, loaded quarterly as one cohort per scrape. Every column is TEXT.
   tables:
   - name: reviews
-
   - name: listings

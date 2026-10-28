@@ -15,3 +15,7 @@ output "s3_bucket_name" {
   description = "airbnb-berlin-data-2026-j"
   value       = aws_s3_bucket.airbnb_berlin_data.id
 }
+
+output "bastion_id" {
+  value = aws_instance.bastion.id
+}

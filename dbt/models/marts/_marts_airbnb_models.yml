@@ -70,7 +70,6 @@ models:
     columns:
       - name: reviews_id
         data_tests:
-          - unique
           - not_null
       - name: listings_id
         data_tests:
@@ -78,6 +77,12 @@ models:
       - name: review_date
         data_tests:
           - not_null
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns:
+              - reviews_id
+              - listings_id
 
   - name: fct_airbnb_reviews_monthly
     columns:
@@ -85,7 +90,6 @@ models:
         data_tests:
           - unique
           - not_null
-
     data_tests:
       - dbt_utils.unique_combination_of_columns:
           arguments:
@@ -122,4 +126,13 @@ models:
       - name: month_key
         data_tests:
           - unique
+          - not_null
+      - name: listings_id
+        data_tests:
+          - not_null
+      - name: target_month
+        data_tests:
+          - not_null
+      - name: new_reviews
+        data_tests:
           - not_null

@@ -5,17 +5,14 @@ services:
     build:
       context: ..
       dockerfile: docker/Dockerfile
-    restart: unless-stopped
     command: standalone
     user: "1000:0"
-    ports:
-      - "127.0.0.1:8080:8080"
-
+     # shares the host network, so the SSM tunnel on 127.0.0.1 is reachable
+    network_mode: host
     env_file:
       - ../.env
 
     environment:
-      ABSOLUTE_PROJECT_DIR: /opt/airflow/project/
       RAW_DATA_PATH: /opt/airflow/project/data
       AIRFLOW_HOME: /opt/airflow/state
       AIRFLOW__CORE__DAGS_FOLDER: /opt/airflow/dags
@@ -30,8 +27,6 @@ services:
       - ../:/opt/airflow/project
       - airflow_state:/opt/airflow/state
       - ~/.aws:/opt/airflow/aws:ro
-    extra_hosts:
-      - "host.docker.internal:host-gateway"
 
 volumes:
   airflow_state:

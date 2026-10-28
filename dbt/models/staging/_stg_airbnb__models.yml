@@ -1,0 +1,65 @@
+version: 2
+
+models:
+  - name: stg_airbnb__listings
+    description: One record per listing and cohort. Type casting and cleaning only.
+    columns:
+      - name: listings_id
+        description: Airbnb listing id, stable across cohorts.
+        data_tests:
+          - not_null
+      - name: surrogate_key
+        description: Hash of id and last_scraped.
+        data_tests:
+          - unique
+          - not_null
+      - name: data_cohort
+        description: Cohort label as YY.MM.DD (the scrape date).
+        data_tests:
+          - not_null
+      - name: price
+        description: Price asked per night in euro, cleaned via clean_price.
+      - name: price_quote_price_per_night
+        description: Price from a concrete booking quote, from cohort 26.03.28 onwards. Missing when the listing was not bookable i.e. the missingness is not random.
+      - name: host_acceptance_rate
+      - name: host_response_rate
+      - name: estimated_occupancy_l365d
+        description: Provider estimate.
+      - name: estimated_revenue_l365d
+        description: Provider estimate.
+      - name: review_scores_rating
+        description: Overall rating on a 0 to 5 scale.
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns:
+              - listings_id
+              - data_cohort
+
+  - name: stg_airbnb__reviews
+    description: Typed reviews, one row per review and cohort. Reviews repeat across cohorts.
+    columns:
+      - name: listing_id
+        description: Foreign key to listings.listings_id.
+        data_tests:
+          - not_null
+      - name: reviews_id
+        description: Airbnb review id.
+        data_tests:
+          - not_null
+      - name: surrogate_key
+        description: Hash of id and date, stable across cohorts.
+      - name: date
+        description: Date the review was written.
+        data_tests:
+          - not_null
+      - name: data_cohort
+        data_tests:
+          - not_null
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns:
+              - reviews_id
+              - data_cohort
+              - listing_id

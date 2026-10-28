@@ -25,8 +25,9 @@ host = require_env("DB_HOST")
 dbname = require_env("DB_NAME")
 user = require_env("DB_USER")
 password = require_env("DB_PASSWORD")
+port = os.getenv("DB_PORT", "5432")
 
-DSN = f"host={host} dbname={dbname} user={user} password={password}"
+DSN = f"host={host} port={port} dbname={dbname} user={user} password={password}"
 
 
 # Read metadata: tables and column for creating datawarehouse
