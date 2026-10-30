@@ -71,6 +71,8 @@ The DAG runs three tasks in order: ingestion, `dbt build`, model training.
 The ingestion task exits non-zero when no new cohort is available, so
 Airflow retries it up to three times a week apart as the project publishes the data irregularly within the quarter.
 
+*Note about schema drift:* Inside Airbnb keeps only the four most recent scrapes online, so cohort 25.09.23 — which this project was built on — has since dropped off the website. A fresh clone therefore starts with four cohorts instead of five, and the columns that existed only in that first scrape (`host_since`, `host_response_time`, `host_acceptance_rate`, `instant_bookable`) never appear at all. The data contract reports this as schema drift on the first load, which is the intended behaviour. The ML model, however, already excludes these columns, so results stay comparable.
+
 For the pipeline to automatically start every three months and not have a container up and running empty for the whole time frame, one can schedule it with cron, under linux/macOS with `crontab -e`: 
 ```
 0 9 1 1,4,7,10 * /path/to/project/start_pipeline.sh. 
