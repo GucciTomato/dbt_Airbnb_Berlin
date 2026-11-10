@@ -6,5 +6,3 @@ CASE
 END
 
 {% endmacro %}
-
-{{ convert_binary_to_bool() }}

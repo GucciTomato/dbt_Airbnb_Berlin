@@ -31,7 +31,7 @@ DSN = f"host={host} port={port} dbname={dbname} user={user} password={password}"
 
 
 # Read metadata: tables and column for creating datawarehouse
-def read_data_contract(file_path="data_ingestion_contract.yaml") -> list:
+def read_data_contract(file_path=Path(__file__).resolve().parent / "data_ingestion_contract.yaml") -> list:
     try:
         with open(file_path, 'r', encoding='utf-8') as f:
             yaml_data = yaml.safe_load(f)
@@ -184,13 +184,3 @@ def find_loaded_cohorts() -> set[str]:
             cohorts = {"data_" + row[0] for row in cur.fetchall()}
             loaded = cohorts if loaded is None else loaded & cohorts
     return loaded or set()
-
-
-def run_pipeline_existing(data_ingestion):
-    if not data_ingestion:
-        data_ingestion = find_existing_data().keys()
-    check_folders(data_ingestion)
-    create_raw_schema_tables()
-    check_contract(data_ingestion)
-    load_file(data_ingestion)
-    click.echo(f"\nIngestion process successful.\n")
