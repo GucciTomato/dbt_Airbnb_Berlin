@@ -142,6 +142,7 @@ consecutive runs incomparable.
 
 ## Future steps
 
+* CI /CD
 * finetune ML with more hyperparameter and an adaptive search algorithm.
 * Move training to the cloud, e.g. via
   `airflow.providers.amazon.aws.operators.sagemaker`.
