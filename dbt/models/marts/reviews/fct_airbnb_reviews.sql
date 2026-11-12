@@ -1,7 +1,10 @@
-{{
- config(
- materialized = "table"
- )
+{{ 
+    config(
+        materialized = "incremental",
+        incremental_strategy = "append",
+        on_schema_change = "fail"
+
+    )
 }}
 
 SELECT DISTINCT ON (reviews_id, listing_id)

@@ -1,0 +1,37 @@
+unit_tests:
+  - name: cleaned_listings_derives_stay_type_price_and_bathrooms
+    description: stay_type buckets by minimum_nights, price falls back to the booking quote, bathrooms are parsed from bathrooms_text.
+    model: int_airbnb_cleaned__listings
+    given:
+      - input: ref('stg_airbnb__listings')
+      # sample mock data
+        rows:
+          - {listings_id: 1, host_id: 10, data_cohort: "25.09.23", minimum_nights: 2, price: 80, price_quote_price_per_night: null, bathrooms_text: "1.5 shared baths"}
+          - {listings_id: 2, host_id: 10, data_cohort: "25.09.23", minimum_nights: 7, price: null, price_quote_price_per_night: 95.5, bathrooms_text: "1 private bath"}
+          - {listings_id: 3, host_id: 11, data_cohort: "25.09.23", minimum_nights: 30, price: null, price_quote_price_per_night: null, bathrooms_text: null}
+          - {listings_id: 4, host_id: 11, data_cohort: "25.09.23", minimum_nights: 120, price: 60, price_quote_price_per_night: 70, bathrooms_text: "2 baths"}
+    expect:
+      rows:
+        - {listings_id: 1, stay_type: short_term, price: 80, price_source: listing_price, number_of_bathrooms: 1.5, has_shared_bathroom: true}
+        - {listings_id: 2, stay_type: weekly, price: 95.5, price_source: price_quote, number_of_bathrooms: 1, has_shared_bathroom: false}
+        - {listings_id: 3, stay_type: monthly, price: null, price_source: null, number_of_bathrooms: null, has_shared_bathroom: null}
+        - {listings_id: 4, stay_type: long_term, price: 60, price_source: listing_price, number_of_bathrooms: 2, has_shared_bathroom: false}
+
+  - name: monthly_features_spans_first_seen_to_last_seen
+    description: One row per listing and month, starting the month after first_seen and ending with last_seen.
+    model: int_airbnb__monthly_features
+    given:
+      - input: ref('int_airbnb_cleaned__listings')
+        rows:
+          - {cohort_date: "2025-09-23"}
+          - {cohort_date: "2026-03-28"}
+      - input: ref('dim_airbnb_listings')
+      # sample mock data
+        rows:
+          - {listings_id: 1, first_seen: "2025-09-23", last_seen: "2025-12-27"}
+          - {listings_id: 2, first_seen: "2026-03-28", last_seen: "2026-03-28"}
+    expect:
+      rows:
+        - {listings_id: 1, target_month: "2025-10-01"}
+        - {listings_id: 1, target_month: "2025-11-01"}
+        - {listings_id: 1, target_month: "2025-12-01"}

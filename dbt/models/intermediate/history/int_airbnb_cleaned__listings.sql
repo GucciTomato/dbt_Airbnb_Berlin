@@ -48,7 +48,7 @@ SELECT
     CASE WHEN hist.bathrooms_text IS NOT NULL THEN hist.bathrooms_text ILIKE '%shared%' END AS has_shared_bathroom,
     hist.bedrooms,
     hist.beds,
-    ARRAY(SELECT json_array_elements_text(hist.amenities)) AS amenities,
+    hist.amenities::JSONB AS amenities,
     COALESCE(hist.price, hist.price_quote_price_per_night)::numeric(10,2) AS price,
     CASE 
         WHEN hist.price IS NOT NULL THEN 'listing_price'
