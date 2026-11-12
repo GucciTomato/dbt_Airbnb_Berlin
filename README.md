@@ -1,6 +1,19 @@
 # Airbnb Berlin dbt project
 
-This project presents an automated pipeline which scrapes the Airbnb Berlin listings and review data from the insideairbnb.com website every three months (when new data gets published), stores it either locally or in the cloud, transforms it with dbt and finally trains a ML-model on the aggregated data by month to predict review activity for the following months. The project uses Python, dbt, Docker, Airflow and Terraform to achieve this. What makes the dataset an intriguing choice to work with is that it represents real world data with common problems associated with it: inconsistent metadata, schema drift and missingness, which pose an interesting challenge during the necessary cleansing and preparation. 
+This project presents an automated pipeline which scrapes the Airbnb Berlin listings and review data from the insideairbnb.com website every three months (when new data gets published), stores it either locally or in the cloud, transforms it with dbt and finally trains a ML-model on the aggregated data by month to predict review activity for the following months. The project uses Python, dbt, Docker, Airflow and Terraform to achieve this. What makes the dataset an intriguing choice to work with is that it represents real world data with common problems associated with it: inconsistent metadata, schema drift and missingness, which pose an interesting challenge during the necessary cleansing and preparation.
+
+## Project structure
+
+| folder | functions |
+| ---------------- | ------------------ |
+| src/ingestion_pipeline/  | download, data contract check, load into Postgres (local or via S3) |
+| src/ml/                |   feature preparation, LightGBM training, manual tuning |
+| dbt/                   |   staging → intermediate → marts, unit and data tests |
+| dags/                  |   Airflow DAG: ingestion → dbt build → training |
+| tests/                 |   pytest for the ingestion |
+| docker/                |   Airflow image and compose file |
+| terraform/             |   VPC, RDS, S3, SSM bastion, IAM |
+
 
 ## Setup
 
@@ -75,7 +88,7 @@ Airflow retries it up to three times a week apart as the project publishes the d
 
 For the pipeline to automatically start every three months and not have a container up and running empty for the whole time frame, one can schedule it with cron, under linux/macOS with `crontab -e`: 
 ```
-0 9 1 1,4,7,10 * /path/to/project/start_pipeline.sh. 
+0 9 1 1,4,7,10 * /path/to/project/start_pipeline.sh
 ```
 On Windows use the Task Scheduler.
 
@@ -92,6 +105,17 @@ docker compose -f docker/compose.yaml exec -w /opt/airflow/project/dbt pipeline 
   /opt/airflow/dbt-venv/bin/dbt docs serve --port 8081
 ```
 
+## Testing
+
+```bash
+pytest  
+cd dbt
+dbt test --select test_type:unit
+dbt build --exclude test_type:unit # only data tests
+```
+
+Pytest covers the Python ingestion, dbt unit tests cover the transformation logic (stay type and incremental loading e.g.) and dbt data tests check keys and relationships in the loaded data. Separately the data contract catches schema drift before anything is written.
+
 ## Architecture
 
 ![Architecture overview](./assets/architecture_overview.svg)
@@ -104,7 +128,7 @@ Quarterly, one cohort at a time:
    business logic once across all cohorts (intermediate) and builds the
    dimensions, facts and the ML feature table (marts).
 3. During training a LightGBM model is fit on the monthly feature table and only
-   saves it if it beats the previous months baseline. Otherwise it is recommended to finetune the model (manual step), a sample script is provided.
+   saves it if it beats the previous months baseline. Otherwise, a failure mail is sent and it is recommended to finetune the model (manual step), a sample script is provided.
 
 ## Design decisions
 

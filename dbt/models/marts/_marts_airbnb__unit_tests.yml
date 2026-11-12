@@ -1,0 +1,42 @@
+unit_tests:
+  - name: listing_snapshots_detect_changes_between_cohorts
+    description: Listing 1 is missing in cohort 3 and comes back in cohort 4 (reappearance). 
+      Review counts that go down count as 0 new reviews.
+    model: fct_airbnb_listing_snapshots
+    given:
+      - input: ref('int_airbnb_cleaned__listings')
+      # mock data
+        rows:
+          - {listings_id: 1, cohort_date: "2025-09-23", number_of_reviews: 10, price: 80, price_source: listing_price, first_seen: "2025-09-23", rn: 3}
+          - {listings_id: 1, cohort_date: "2025-12-27", number_of_reviews: 12, price: 80, price_source: listing_price, first_seen: "2025-09-23", rn: 2}
+          - {listings_id: 2, cohort_date: "2026-03-28", number_of_reviews: 1, price: 50, price_source: listing_price, first_seen: "2026-03-28", rn: 1}
+          - {listings_id: 1, cohort_date: "2026-06-26", number_of_reviews: 11, price: 90, price_source: price_quote, first_seen: "2025-09-23", rn: 1}
+    expect:
+      rows:
+        - {listings_id: 1, cohort_date: "2025-09-23", is_first_cohort: true, is_last_cohort: false, is_reappearance: false, cohorts_since_previous: null, new_reviews: 0, price_change_is_comparable: false}
+        - {listings_id: 1, cohort_date: "2025-12-27", is_first_cohort: false, is_last_cohort: false, is_reappearance: false, cohorts_since_previous: 1, new_reviews: 2, price_change_is_comparable: true}
+        - {listings_id: 2, cohort_date: "2026-03-28", is_first_cohort: true, is_last_cohort: true, is_reappearance: false, cohorts_since_previous: null, new_reviews: 0, price_change_is_comparable: false}
+        - {listings_id: 1, cohort_date: "2026-06-26", is_first_cohort: false, is_last_cohort: true, is_reappearance: true, cohorts_since_previous: 2, new_reviews: 0, price_change_is_comparable: false}
+
+  - name: reviews_incremental_loads_only_unseen_reviews
+    description: Review 100 is already loaded and repeats in the new cohort, review 99
+      belongs to an old cohort, review 101 is new and appears in two new cohorts.
+      Only 101 is inserted, with the first cohort it was seen in.
+    model: fct_airbnb_reviews
+    overrides:
+      macros:
+        is_incremental: true
+    given:
+      - input: this
+        rows:
+          - {reviews_id: 100, listings_id: 1, first_seen_cohort: "2025-12-27"}
+      - input: ref('stg_airbnb__reviews')
+      # mock data
+        rows:
+          - {reviews_id: 99, listing_id: 1, date: "2025-11-02", comments: "old", data_cohort: "25.12.27"}
+          - {reviews_id: 100, listing_id: 1, date: "2025-12-01", comments: "known", data_cohort: "26.03.28"}
+          - {reviews_id: 101, listing_id: 1, date: "2026-02-14", comments: "new", data_cohort: "26.03.28"}
+          - {reviews_id: 101, listing_id: 1, date: "2026-02-14", comments: "new", data_cohort: "26.06.26"}
+    expect:
+      rows:
+        - {reviews_id: 101, listings_id: 1, review_month: "2026-02-01", first_seen_cohort: "2026-03-28"}

@@ -5,7 +5,7 @@ import lightgbm as lgb
 import numpy as np
 import optuna
 from sklearn.metrics import mean_poisson_deviance
-from preprocessing import prepare, setup_logging
+from .preprocessing import prepare, setup_logging
 
 logger = logging.getLogger(__name__)
 

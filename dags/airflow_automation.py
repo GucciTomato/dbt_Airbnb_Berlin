@@ -9,7 +9,7 @@ from airflow.providers.smtp.notifications.smtp import SmtpNotifier
 ALERT_EMAIL = os.environ["ALERT_EMAIL"]
 DBT = "/opt/airflow/dbt-venv/bin/dbt"
 DBT_DIR = "/opt/airflow/project/dbt"
-ML_DIR = "/opt/airflow/project/ml"
+PYTHON = "/opt/airflow/app-venv/bin/python"
 
 with DAG(
     dag_id="airbnb_berlin_data_ingestion_pipeline",
@@ -21,8 +21,7 @@ with DAG(
     
     ingestion_pipeline_task = BashOperator(
         task_id="ingestion_pipeline",
-        bash_command="/opt/airflow/app-venv/bin/python ingestion_pipeline.py",
-        cwd="/opt/airflow/project/data/ingestion_pipeline",
+        bash_command=f"{PYTHON} -m ingestion_pipeline",
         retries=2,
         retry_delay=timedelta(seconds=30), # for debugging e.g. seconds=30
     )
@@ -40,8 +39,7 @@ with DAG(
 
     train_model = BashOperator(
         task_id="train_model",
-        bash_command=f"/opt/airflow/app-venv/bin/python {ML_DIR}/training.py",
-        cwd=ML_DIR,
+        bash_command=f"{PYTHON} -m ml.training",
         retries=0,
         on_failure_callback=SmtpNotifier(
             to=ALERT_EMAIL,

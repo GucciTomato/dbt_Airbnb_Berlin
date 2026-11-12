@@ -1,0 +1,21 @@
+dbt_airbnb_berlin:
+ target: dev
+ outputs:
+    dev:
+      dbname:
+      host: localhost
+      pass:
+      port: 15432
+      schema:
+      threads: 1
+      type: postgres
+      user: 
+    prod:
+      dbname:
+      host: localhost
+      pass:
+      port: 15432
+      schema: public
+      threads: 1
+      type: postgres
+      user:

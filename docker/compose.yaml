@@ -21,6 +21,7 @@ services:
       DBT_PROFILES_DIR: /opt/airflow/project/docker/
       AWS_CONFIG_FILE: /opt/airflow/aws/config
       AWS_SHARED_CREDENTIALS_FILE: /opt/airflow/aws/credentials
+      PYTHONPATH: /opt/airflow/project/src
     
     volumes:
       - ../dags:/opt/airflow/dags:ro

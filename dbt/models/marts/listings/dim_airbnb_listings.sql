@@ -18,7 +18,7 @@ SELECT
     bedrooms,
     beds,
     amenities,
-    CARDINALITY(amenities) AS amenities_count,
+    JSONB_ARRAY_LENGTH(amenities) AS amenities_count,
     license,
     license IS NOT NULL AS has_license,
     first_seen,
