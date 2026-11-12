@@ -1,12 +1,12 @@
 # Imports
-import preprocessing
+from . import preprocessing
 import logging
 import json
 import numpy as np
 from sklearn.metrics import mean_absolute_error, mean_poisson_deviance
 import lightgbm as lgb
 from scipy.stats import spearmanr
-from preprocessing import prepare, setup_logging
+from .preprocessing import prepare, setup_logging
 from pathlib import Path
 
 logger = logging.getLogger(__name__)

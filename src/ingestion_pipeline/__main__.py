@@ -1,8 +1,8 @@
 import asyncio
 import click
-import download
-import load_local_data
-from storage import get_storage
+from . import download
+from . import load_local_data
+from .storage import get_storage
 import logging
 from pathlib import Path
 import sys

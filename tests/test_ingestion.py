@@ -3,9 +3,7 @@ from pathlib import Path
 from bs4 import BeautifulSoup
 from unittest.mock import Mock
 from bs4 import BeautifulSoup
-from data.ingestion_pipeline import download
-from data.ingestion_pipeline import load_local_data
-#import data.ingestion_pipeline.
+from ingestion_pipeline import download, load_local_data
 
 fixture_path = Path(__file__).parent / "fixtures/inside_airbnb_sample_data.html"
 

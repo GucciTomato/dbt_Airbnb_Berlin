@@ -4,7 +4,7 @@ import io
 from pathlib import Path
 from urllib.request import urlopen, urlretrieve 
 import boto3
-from load_local_data import require_env
+from .load_local_data import require_env
 
 
 class LocalStorage:

@@ -20,5 +20,10 @@ SELECT DISTINCT ON (reviews_id, listing_id)
     comments IS NULL OR LENGTH(TRIM(comments)) = 0 AS is_empty_comment,
     TO_DATE(data_cohort, 'YY.MM.DD') AS first_seen_cohort,
     data_cohort
-FROM {{ ref('stg_airbnb__reviews') }}
+FROM {{ ref('stg_airbnb__reviews') }} r
+{% if is_incremental() %}
+-- only cohorts newer than the last load
+WHERE TO_DATE(r.data_cohort, 'YY.MM.DD') > (SELECT MAX(first_seen_cohort) FROM {{ this }})
+AND NOT EXISTS (SELECT 1 FROM {{ this }} t WHERE t.reviews_id = r.reviews_id AND t.listings_id = r.listing_id)
+{% endif %}
 ORDER BY reviews_id, listing_id, TO_DATE(data_cohort, 'YY.MM.DD')
