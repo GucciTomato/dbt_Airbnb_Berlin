@@ -46,3 +46,6 @@ model_*.txt
 
 # runtime artifacts
 tunnel.pid
+
+# tests
+!tests/integration/profiles.yml
