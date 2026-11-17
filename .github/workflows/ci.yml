@@ -1,0 +1,83 @@
+name: CI
+
+on:
+  push:
+    branches: [main, dev]
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  python-unit-tests:
+    name: pytest (unit)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - run: pip install -r requirements.txt
+      - run: pytest
+
+  dbt-and-integration-tests:
+    name: dbt unit tests + integration tests
+    runs-on: ubuntu-latest
+    needs: python-unit-tests
+
+    services:
+      postgres:
+        image: postgres:18 # same major version as RDS
+        env:
+          POSTGRES_USER: airbnb
+          POSTGRES_PASSWORD: airbnb
+          POSTGRES_DB: airbnb_berlin_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U airbnb"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+
+    env:
+      DB_HOST: localhost
+      DB_PORT: 5432
+      DB_NAME: airbnb_berlin_test
+      DB_USER: airbnb
+      DB_PASSWORD: airbnb
+      PIPELINE_TARGET: local
+      DBT_PROFILES_DIR: ${{ github.workspace }}/tests/integration
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt dbt-core==1.12.5 # same dbt-core as used by Docker
+
+      - name: dbt deps + parse
+        working-directory: dbt
+        run: |
+          dbt deps
+          dbt parse
+
+      - name: dbt unit tests
+        working-directory: dbt
+        env:
+          DBT_SCHEMA: unit
+        # unit tests need the model relations to exist (incremental model: "this")
+        # so build everything once on empty raw tables first
+        run: |
+          (cd .. && PYTHONPATH=src python -c "from ingestion_pipeline.load_local_data import create_raw_schema_tables; create_raw_schema_tables()")
+          dbt run
+          dbt test --select test_type:unit
+
+      - name: Integration tests (loader -> Postgres -> dbt build)
+        run: pytest -m integration -v
