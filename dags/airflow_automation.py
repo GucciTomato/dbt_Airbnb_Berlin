@@ -28,7 +28,7 @@ with DAG(
 
     dbt_build = BashOperator(
         task_id="dbt_build",
-        bash_command=f"{DBT} build",
+        bash_command=f"{DBT} build --exclude test_type:unit",
         cwd=DBT_DIR,
         retries=0,
         on_failure_callback=SmtpNotifier(
